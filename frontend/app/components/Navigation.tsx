@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/app/context/AuthContext';
 import {
     TrendingUp,
     Menu,
@@ -19,34 +20,19 @@ import {
     Briefcase,
 } from 'lucide-react';
 
-interface User {
-    name: string;
-    email: string;
-    role: string;
-}
-
 export default function Navigation() {
     const pathname = usePathname();
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
-    const [user, setUser] = useState<User | null>(null);
+    const { user, logout } = useAuth();
 
-    useEffect(() => {
-        // Get user from localStorage
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-            setUser(JSON.parse(userStr));
-        }
-    }, []);
-
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+    const handleLogout = async () => {
+        await logout();
         router.push('/login');
     };
 
     const navLinks = [
-        { href: '/dashboard', label: 'Dashboard', icon: Home },
+        { href: '/', label: 'Home', icon: Home },
         { href: '/market', label: 'Market', icon: BarChart2 },
         { href: '/stocks', label: 'Stocks', icon: Layers },
         { href: '/portfolio', label: 'Portfolio', icon: Wallet },
@@ -62,7 +48,7 @@ export default function Navigation() {
                 <div className="flex justify-between h-16">
                     {/* Logo */}
                     <div className="flex items-center">
-                        <Link href="/dashboard" className="flex items-center gap-2">
+                        <Link href="/" className="flex items-center gap-2">
                             <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
                                 <TrendingUp className="w-6 h-6 text-white" />
                             </div>
@@ -79,8 +65,8 @@ export default function Navigation() {
                                     key={link.href}
                                     href={link.href}
                                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(link.href)
-                                            ? 'bg-primary-50 text-primary-600'
-                                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                        ? 'bg-primary-50 text-primary-600'
+                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                         }`}
                                 >
                                     <Icon className="w-4 h-4" />
@@ -183,8 +169,8 @@ export default function Navigation() {
                                     href={link.href}
                                     onClick={() => setIsOpen(false)}
                                     className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium ${isActive(link.href)
-                                            ? 'bg-primary-50 text-primary-600'
-                                            : 'text-gray-600 hover:bg-gray-50'
+                                        ? 'bg-primary-50 text-primary-600'
+                                        : 'text-gray-600 hover:bg-gray-50'
                                         }`}
                                 >
                                     <Icon className="w-5 h-5" />

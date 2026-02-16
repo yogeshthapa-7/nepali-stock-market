@@ -30,6 +30,14 @@ const ipoSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    minApplication: {
+      type: Number,
+      default: 10,
+    },
+    maxApplication: {
+      type: Number,
+      default: 1000,
+    },
     status: {
       type: String,
       enum: ['upcoming', 'open', 'closed', 'allotted'],

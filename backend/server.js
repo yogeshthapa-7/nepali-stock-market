@@ -21,14 +21,14 @@ const app = express();
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer, {
     cors: {
-        origin: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+        origin: process.env.CLIENT_URL || 'http://localhost:3000',
         methods: ['GET', 'POST'],
     },
 });
 
 // Middleware
 app.use(cors({
-    origin: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
     credentials: true,
 }));
 app.use(express.json());

@@ -3,44 +3,74 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/app/context/AuthContext';
 import { TrendingUp, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
     const router = useRouter();
+    const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [debugInfo, setDebugInfo] = useState('');
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async () => {
+        setDebugInfo('Form submitted...');
+        console.log('=== LOGIN FORM SUBMITTED ===');
+        console.log('Email:', email);
+        console.log('Password length:', password.length);
+
         setIsLoading(true);
         setError('');
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
+            setDebugInfo('Calling login API...');
+            console.log('Starting login process...');
 
-            const data = await response.json();
+            await login(email, password);
 
-            if (!response.ok) {
-                throw new Error(data.message || 'Login failed');
-            }
+            setDebugInfo('Login successful! Checking user role...');
+            console.log('Login function completed successfully');
 
-            // Store token
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
+            // Wait a bit for localStorage to be updated
+            setTimeout(() => {
+                const userData = localStorage.getItem('user');
+                console.log('User data from localStorage:', userData);
+                setDebugInfo(`User data: ${userData ? 'Found' : 'Not found'}`);
 
-            router.push('/dashboard');
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    console.log('Parsed user object:', user);
+                    console.log('User role:', user.role);
+
+                    setDebugInfo(`User role: ${user.role}. Redirecting...`);
+
+                    // Redirect based on user role
+                    if (user.role === 'admin') {
+                        console.log('User is admin, redirecting to /dashboard');
+                        router.push('/dashboard');
+                    } else {
+                        console.log('User is regular user, redirecting to /');
+                        router.push('/');
+                    }
+                } else {
+                    console.log('No user data found, redirecting to /');
+                    setDebugInfo('No user data found. Redirecting to home...');
+                    router.push('/');
+                }
+                setIsLoading(false);
+            }, 500); // Increased timeout to 500ms
         } catch (err: any) {
-            setError(err.message || 'Something went wrong');
-        } finally {
+            console.error('=== LOGIN ERROR ===');
+            console.error('Error object:', err);
+            console.error('Error message:', err.message);
+            console.error('Error response:', err.response);
+
+            const errorMsg = err.response?.data?.message || err.message || 'Something went wrong';
+            setDebugInfo(`ERROR: ${errorMsg}`);
+            setError(errorMsg);
             setIsLoading(false);
         }
     };
@@ -63,10 +93,16 @@ export default function LoginPage() {
                         </p>
                     </div>
 
-                    <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                    <div className="mt-8 space-y-6">
                         {error && (
                             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
                                 {error}
+                            </div>
+                        )}
+
+                        {debugInfo && (
+                            <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg text-sm font-mono">
+                                Debug: {debugInfo}
                             </div>
                         )}
 
@@ -87,6 +123,12 @@ export default function LoginPage() {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleSubmit();
+                                            }
+                                        }}
                                         className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                                         placeholder="you@example.com"
                                     />
@@ -109,6 +151,12 @@ export default function LoginPage() {
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleSubmit();
+                                            }
+                                        }}
                                         className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                                         placeholder="••••••••"
                                     />
@@ -147,7 +195,8 @@ export default function LoginPage() {
                         </div>
 
                         <button
-                            type="submit"
+                            type="button"
+                            onClick={handleSubmit}
                             disabled={isLoading}
                             className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -167,7 +216,7 @@ export default function LoginPage() {
                                 Sign up
                             </Link>
                         </p>
-                    </form>
+                    </div>
                 </div>
             </div>
 

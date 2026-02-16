@@ -40,7 +40,7 @@ export default function SignupPage() {
         }
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -63,7 +63,12 @@ export default function SignupPage() {
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
 
-            router.push('/dashboard');
+            // Redirect based on user role
+            if (data.user?.role === 'admin') {
+                router.push('/dashboard');
+            } else {
+                router.push('/');
+            }
         } catch (err: any) {
             setError(err.message || 'Something went wrong');
         } finally {
