@@ -32,10 +32,10 @@ export default function Navigation() {
     };
 
     const navLinks = [
-        { href: '/', label: 'Home', icon: Home },
+        { href: '/user-dashboard', label: 'Dashboard', icon: Home },
+        { href: '/portfolio', label: 'Portfolio', icon: Wallet },
         { href: '/market', label: 'Market', icon: BarChart2 },
         { href: '/stocks', label: 'Stocks', icon: Layers },
-        { href: '/portfolio', label: 'Portfolio', icon: Wallet },
         { href: '/ipos', label: 'IPOs', icon: Briefcase },
         { href: '/news', label: 'News', icon: Newspaper },
     ];
@@ -122,7 +122,7 @@ export default function Navigation() {
                                         </Link>
                                         {user.role === 'admin' && (
                                             <Link
-                                                href="/admin"
+                                                href="/dashboard"
                                                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                                             >
                                                 <Settings className="w-4 h-4" />

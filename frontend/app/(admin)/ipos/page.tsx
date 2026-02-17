@@ -11,7 +11,12 @@ import {
     Calendar,
     Users,
     Filter,
-    TrendingUp
+    TrendingUp,
+    Eye,
+    CheckCircle,
+    XCircle,
+    Clock,
+    User as UserIcon,
 } from 'lucide-react';
 import { iposAPI, IPO } from '@/lib/api';
 
@@ -24,8 +29,8 @@ export default function AdminIPOsPage() {
     const [editingIPO, setEditingIPO] = useState<IPO | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+    const [viewApplicationsIPO, setViewApplicationsIPO] = useState<IPO | null>(null);
 
-    // Form state
     const [formData, setFormData] = useState<{
         symbol: string;
         name: string;
@@ -78,14 +83,12 @@ export default function AdminIPOsPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-
         try {
             if (editingIPO) {
                 await iposAPI.update(editingIPO.symbol, formData);
             } else {
                 await iposAPI.create(formData);
             }
-
             setIsModalOpen(false);
             resetForm();
             fetchIPOs();
@@ -150,248 +153,211 @@ export default function AdminIPOsPage() {
         setIsModalOpen(true);
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'open':
-                return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-            case 'upcoming':
-                return 'bg-blue-100 text-blue-700 border-blue-200';
-            case 'closed':
-                return 'bg-slate-100 text-slate-700 border-slate-200';
-            case 'allotted':
-                return 'bg-violet-100 text-violet-700 border-violet-200';
-            default:
-                return 'bg-slate-100 text-slate-700 border-slate-200';
-        }
+    const statusConfig: Record<string, {bg: string, text: string, border: string, dot: string}> = {
+        open:     { bg: 'rgba(16,185,129,0.1)',  text: '#10b981', border: 'rgba(16,185,129,0.25)',  dot: '#10b981' },
+        upcoming: { bg: 'rgba(6,182,212,0.1)',   text: '#06b6d4', border: 'rgba(6,182,212,0.25)',   dot: '#06b6d4' },
+        closed:   { bg: 'rgba(100,116,139,0.1)', text: '#94a3b8', border: 'rgba(100,116,139,0.25)', dot: '#94a3b8' },
+        allotted: { bg: 'rgba(167,139,250,0.1)', text: '#a78bfa', border: 'rgba(167,139,250,0.25)', dot: '#a78bfa' },
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-slate-100">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">IPO Management</h1>
-                        <p className="text-slate-600 mt-1">Manage and monitor all IPO offerings</p>
+        <div className="space-y-5">
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+                * { font-family: 'DM Sans', sans-serif; }
+                .mono { font-family: 'Space Mono', monospace; }
+                .table-row:hover { background: rgba(255,255,255,0.025); }
+                .form-input {
+                    width: 100%;
+                    padding: 10px 14px;
+                    background: rgba(255,255,255,0.04);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 10px;
+                    color: white;
+                    font-size: 14px;
+                    transition: all 0.2s;
+                    outline: none;
+                }
+                .form-input:focus { border-color: rgba(167,139,250,0.5); background: rgba(167,139,250,0.05); box-shadow: 0 0 0 3px rgba(167,139,250,0.1); }
+                .form-input::placeholder { color: rgba(148,163,184,0.5); }
+                .form-input option { background: #1a1f2e; color: white; }
+            `}</style>
+
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1 h-5 bg-violet-400 rounded-full" />
+                        <span className="mono text-xs text-violet-400/70 tracking-widest uppercase">Management</span>
                     </div>
-                    <button
-                        onClick={openNewModal}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-violet-700 text-white rounded-xl hover:from-violet-700 hover:to-violet-800 shadow-lg shadow-violet-500/30 transition-all duration-200 font-semibold"
+                    <h1 className="text-2xl font-bold text-white">IPO Management</h1>
+                    <p className="text-sm text-slate-500 mt-0.5">Manage and monitor all IPO offerings</p>
+                </div>
+                <button
+                    onClick={openNewModal}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 hover:border-violet-500/50 text-violet-300 rounded-xl transition-all duration-200 text-sm font-semibold"
+                >
+                    <Plus className="w-4 h-4" />
+                    Add IPO
+                </button>
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1 relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                    <input
+                        type="text"
+                        placeholder="Search by symbol, name or company..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-[#0d1420] border border-white/[0.07] hover:border-white/[0.12] focus:border-violet-500/40 focus:bg-violet-500/[0.03] rounded-xl text-sm text-white placeholder-slate-600 outline-none transition-all"
+                    />
+                </div>
+                <div className="relative">
+                    <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600 pointer-events-none" />
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="pl-9 pr-8 py-2.5 bg-[#0d1420] border border-white/[0.07] hover:border-white/[0.12] focus:border-violet-500/40 rounded-xl text-sm text-slate-400 outline-none transition-all appearance-none"
+                        style={{minWidth: '140px'}}
                     >
-                        <Plus className="w-5 h-5" />
-                        Add IPO
-                    </button>
+                        <option value="">All Status</option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="open">Open</option>
+                        <option value="closed">Closed</option>
+                        <option value="allotted">Allotted</option>
+                    </select>
                 </div>
+            </div>
 
-                {/* Filters */}
-                <div className="bg-white text-black  rounded-2xl shadow-sm border border-slate-200 p-5">
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <div className="flex-1 relative">
-                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="Search IPOs by symbol, name or company..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                            />
+            {/* Table */}
+            <div className="bg-[#0d1420] border border-white/[0.07] rounded-2xl overflow-hidden">
+                {isLoading ? (
+                    <div className="flex flex-col items-center justify-center h-64 gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+                            <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
                         </div>
-                        <div className="relative">
-                            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                                className="pl-10 pr-10 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent appearance-none bg-white font-medium text-slate-700"
-                            >
-                                <option value="">All Status</option>
-                                <option value="upcoming">Upcoming</option>
-                                <option value="open">Open</option>
-                                <option value="closed">Closed</option>
-                                <option value="allotted">Allotted</option>
-                            </select>
-                        </div>
+                        <p className="text-sm text-slate-600">Loading IPOs...</p>
                     </div>
-                </div>
-
-                {/* IPOs Table */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    {isLoading ? (
-                        <div className="flex flex-col items-center justify-center h-96">
-                            <div className="animate-spin rounded-full h-12 w-12 border-4 border-violet-600 border-t-transparent"></div>
-                            <p className="mt-4 text-slate-600 font-medium">Loading IPOs...</p>
+                ) : filteredIPOs.length === 0 ? (
+                    <div className="text-center py-16">
+                        <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3">
+                            <TrendingUp className="w-6 h-6 text-slate-700" />
                         </div>
-                    ) : filteredIPOs.length === 0 ? (
-                        <div className="text-center py-16">
-                            <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <TrendingUp className="w-8 h-8 text-slate-400" />
-                            </div>
-                            <p className="text-slate-900 font-semibold text-lg">No IPOs found</p>
-                            <p className="text-slate-500 text-sm mt-1">Get started by adding your first IPO</p>
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-slate-50 border-b-2 border-slate-200">
-                                    <tr>
-                                        <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                            Symbol
-                                        </th>
-                                        <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                            Company
-                                        </th>
-                                        <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th className="px-6 py-4 text-right text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                            Issue Price
-                                        </th>
-                                        <th className="px-6 py-4 text-right text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                            Shares Available
-                                        </th>
-                                        <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                            Open Date
-                                        </th>
-                                        <th className="px-6 py-4 text-right text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-slate-100">
-                                    {filteredIPOs.map((ipo) => (
-                                        <tr key={ipo._id} className="hover:bg-slate-50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm font-semibold text-slate-500">No IPOs found</p>
+                        <p className="text-xs text-slate-700 mt-1">Get started by adding your first IPO</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-white/[0.06]">
+                                    {['Symbol', 'Company', 'Status', 'Issue Price', 'Shares Available', 'Open Date', 'Applications', 'Actions'].map(h => (
+                                        <th key={h} className={`px-5 py-3 text-[10px] mono font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap ${h === 'Issue Price' || h === 'Shares Available' || h === 'Actions' ? 'text-right' : h === 'Applications' ? 'text-center' : 'text-left'}`}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/[0.04]">
+                                {filteredIPOs.map((ipo) => {
+                                    const sc = statusConfig[ipo.status] || statusConfig.closed;
+                                    return (
+                                        <tr key={ipo._id} className="table-row transition-colors">
+                                            <td className="px-5 py-3.5 whitespace-nowrap">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 text-white font-bold text-sm shadow-md">
-                                                        {ipo.symbol.charAt(0)}
+                                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-violet-500/10 border border-violet-500/20">
+                                                        <span className="mono text-xs font-bold text-violet-400">{ipo.symbol.charAt(0)}</span>
                                                     </div>
-                                                    <span className="font-bold text-slate-900">{ipo.symbol}</span>
+                                                    <span className="mono text-sm font-bold text-white">{ipo.symbol}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div>
-                                                    <p className="font-bold text-slate-900">{ipo.name}</p>
-                                                    <p className="text-sm text-slate-600">{ipo.company}</p>
-                                                </div>
+                                            <td className="px-5 py-3.5">
+                                                <div className="text-sm font-semibold text-slate-200">{ipo.name}</div>
+                                                <div className="text-xs text-slate-600 mt-0.5">{ipo.company}</div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold uppercase border ${getStatusColor(ipo.status)}`}>
+                                            <td className="px-5 py-3.5 whitespace-nowrap">
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg mono text-[10px] font-bold uppercase tracking-wider" style={{background: sc.bg, color: sc.text, border: `1px solid ${sc.border}`}}>
+                                                    <div className="w-1.5 h-1.5 rounded-full" style={{background: sc.dot}} />
                                                     {ipo.status}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <span className="font-bold text-slate-900 text-lg">₹{ipo.issuePrice}</span>
+                                            <td className="px-5 py-3.5 whitespace-nowrap text-right">
+                                                <span className="mono text-sm font-bold text-white">₹{ipo.issuePrice}</span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <div className="space-y-1">
-                                                    <p className="font-bold text-slate-900">{ipo.sharesAvailable.toLocaleString()}</p>
-                                                    <p className="text-xs text-slate-500">of {ipo.shares.toLocaleString()}</p>
+                                            <td className="px-5 py-3.5 whitespace-nowrap text-right">
+                                                <div className="mono text-sm font-bold text-slate-200">{ipo.sharesAvailable.toLocaleString()}</div>
+                                                <div className="text-[11px] text-slate-600">of {ipo.shares.toLocaleString()}</div>
+                                            </td>
+                                            <td className="px-5 py-3.5 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5 text-slate-500">
+                                                    <Calendar className="w-3.5 h-3.5 text-violet-500/60" />
+                                                    <span className="text-sm">{new Date(ipo.openDate).toLocaleDateString()}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-2 text-slate-700">
-                                                    <Calendar className="w-4 h-4 text-violet-500" />
-                                                    <span className="font-medium">{new Date(ipo.openDate).toLocaleDateString()}</span>
-                                                </div>
+                                            <td className="px-5 py-3.5 whitespace-nowrap text-center">
+                                                <button
+                                                    onClick={() => setViewApplicationsIPO(ipo)}
+                                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${ipo.applications?.length > 0 ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20' : 'bg-white/[0.03] text-slate-600 border border-white/[0.06]'}`}
+                                                >
+                                                    <Users className="w-3.5 h-3.5" />
+                                                    {ipo.applications?.length || 0}
+                                                </button>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <div className="flex items-center justify-end gap-2">
+                                            <td className="px-5 py-3.5 whitespace-nowrap text-right">
+                                                <div className="flex items-center justify-end gap-1">
                                                     <button
                                                         onClick={() => handleEdit(ipo)}
-                                                        className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all"
-                                                        title="Edit IPO"
+                                                        className="p-2 text-slate-600 hover:text-violet-400 hover:bg-violet-500/10 rounded-lg transition-all"
                                                     >
-                                                        <Edit2 className="w-4 h-4" />
+                                                        <Edit2 className="w-3.5 h-3.5" />
                                                     </button>
                                                     {deleteConfirm === ipo.symbol ? (
-                                                        <div className="flex items-center gap-1 bg-red-50 rounded-lg px-2 py-1">
-                                                            <button
-                                                                onClick={() => handleDelete(ipo.symbol)}
-                                                                className="text-xs font-bold text-red-600 hover:text-red-700 px-2"
-                                                            >
-                                                                Confirm
-                                                            </button>
-                                                            <button
-                                                                onClick={() => setDeleteConfirm(null)}
-                                                                className="p-1 text-slate-400 hover:text-slate-600"
-                                                            >
-                                                                <X className="w-3.5 h-3.5" />
-                                                            </button>
+                                                        <div className="flex items-center gap-1 bg-red-500/10 border border-red-500/20 rounded-lg px-2 py-1">
+                                                            <button onClick={() => handleDelete(ipo.symbol)} className="text-[11px] mono font-bold text-red-400 hover:text-red-300 px-1">Yes</button>
+                                                            <button onClick={() => setDeleteConfirm(null)} className="p-0.5 text-slate-600 hover:text-slate-400"><X className="w-3 h-3" /></button>
                                                         </div>
                                                     ) : (
                                                         <button
                                                             onClick={() => setDeleteConfirm(ipo.symbol)}
-                                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                                            title="Delete IPO"
+                                                            className="p-2 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                                                         >
-                                                            <Trash2 className="w-4 h-4" />
+                                                            <Trash2 className="w-3.5 h-3.5" />
                                                         </button>
                                                     )}
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer Info */}
-                <div className="flex items-center justify-between px-2">
-                    <p className="text-sm text-slate-600">
-                        Showing <span className="font-semibold text-slate-900">{filteredIPOs.length}</span> IPOs
-                    </p>
-                </div>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
+            <p className="text-xs text-slate-600 px-1">Showing <span className="text-slate-400 font-semibold">{filteredIPOs.length}</span> IPOs</p>
 
-            {/* Modal */}
+            {/* Add/Edit Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#0f1520] border border-white/[0.1] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.07]">
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-900">
-                                    {editingIPO ? 'Edit IPO' : 'Add New IPO'}
-                                </h2>
-                                <p className="text-sm text-slate-600 mt-1">
-                                    {editingIPO ? 'Update IPO information' : 'Enter IPO details to add to the market'}
-                                </p>
+                                <h2 className="text-lg font-bold text-white">{editingIPO ? 'Edit IPO' : 'Add New IPO'}</h2>
+                                <p className="text-xs text-slate-500 mt-0.5">{editingIPO ? 'Update IPO information' : 'Enter IPO details to add to the market'}</p>
                             </div>
-                            <button
-                                onClick={() => {
-                                    setIsModalOpen(false);
-                                    resetForm();
-                                }}
-                                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
-                            >
-                                <X className="w-5 h-5" />
+                            <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="p-2 text-slate-600 hover:text-slate-300 hover:bg-white/[0.05] rounded-lg transition-all">
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                                        Symbol *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.symbol}
-                                        onChange={(e) => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
-                                        disabled={!!editingIPO}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent disabled:bg-slate-100 disabled:text-slate-500 transition-all font-medium"
-                                        placeholder="e.g., NABIL"
-                                    />
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Symbol *</label>
+                                    <input type="text" required value={formData.symbol} onChange={(e) => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })} disabled={!!editingIPO} className="form-input disabled:opacity-40" placeholder="e.g., NABIL" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                                        Status
-                                    </label>
-                                    <select
-                                        value={formData.status}
-                                        onChange={(e) => setFormData({ ...formData, status: e.target.value as 'upcoming' | 'open' | 'closed' | 'allotted' })}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all font-medium"
-                                    >
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Status</label>
+                                    <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as any })} className="form-input">
                                         <option value="upcoming">Upcoming</option>
                                         <option value="open">Open</option>
                                         <option value="closed">Closed</option>
@@ -399,159 +365,133 @@ export default function AdminIPOsPage() {
                                     </select>
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                                        Company Name *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.company}
-                                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                                        placeholder="e.g., NMB Bank Ltd"
-                                    />
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Company Name *</label>
+                                    <input type="text" required value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} className="form-input" placeholder="e.g., NMB Bank Ltd" />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                                        IPO Name *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                                        placeholder="e.g., NMB Bank IPO"
-                                    />
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">IPO Name *</label>
+                                    <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="form-input" placeholder="e.g., NMB Bank IPO" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                                        Issue Price *
-                                    </label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        required
-                                        value={formData.issuePrice}
-                                        onChange={(e) => setFormData({ ...formData, issuePrice: parseFloat(e.target.value) })}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                                    />
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Issue Price *</label>
+                                    <input type="number" step="0.01" min="0" required value={formData.issuePrice} onChange={(e) => setFormData({ ...formData, issuePrice: parseFloat(e.target.value) })} className="form-input" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                                        Total Shares *
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        required
-                                        value={formData.shares}
-                                        onChange={(e) => setFormData({ ...formData, shares: parseInt(e.target.value) })}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                                    />
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Total Shares *</label>
+                                    <input type="number" min="0" required value={formData.shares} onChange={(e) => setFormData({ ...formData, shares: parseInt(e.target.value) })} className="form-input" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                                        Available Shares *
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        required
-                                        value={formData.sharesAvailable}
-                                        onChange={(e) => setFormData({ ...formData, sharesAvailable: parseInt(e.target.value) })}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                                    />
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Available Shares *</label>
+                                    <input type="number" min="0" required value={formData.sharesAvailable} onChange={(e) => setFormData({ ...formData, sharesAvailable: parseInt(e.target.value) })} className="form-input" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                                        Min Application
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        value={formData.minApplication}
-                                        onChange={(e) => setFormData({ ...formData, minApplication: parseInt(e.target.value) })}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                                    />
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Min Application</label>
+                                    <input type="number" min="1" value={formData.minApplication} onChange={(e) => setFormData({ ...formData, minApplication: parseInt(e.target.value) })} className="form-input" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                                        Max Application
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        value={formData.maxApplication}
-                                        onChange={(e) => setFormData({ ...formData, maxApplication: parseInt(e.target.value) })}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                                    />
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Max Application</label>
+                                    <input type="number" min="1" value={formData.maxApplication} onChange={(e) => setFormData({ ...formData, maxApplication: parseInt(e.target.value) })} className="form-input" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                                        Open Date *
-                                    </label>
-                                    <input
-                                        type="date"
-                                        required
-                                        value={formData.openDate}
-                                        onChange={(e) => setFormData({ ...formData, openDate: e.target.value })}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                                    />
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Open Date *</label>
+                                    <input type="date" required value={formData.openDate} onChange={(e) => setFormData({ ...formData, openDate: e.target.value })} className="form-input" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                                        Close Date *
-                                    </label>
-                                    <input
-                                        type="date"
-                                        required
-                                        value={formData.closeDate}
-                                        onChange={(e) => setFormData({ ...formData, closeDate: e.target.value })}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                                    />
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Close Date *</label>
+                                    <input type="date" required value={formData.closeDate} onChange={(e) => setFormData({ ...formData, closeDate: e.target.value })} className="form-input" />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                                        Description
-                                    </label>
-                                    <textarea
-                                        value={formData.description}
-                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        rows={3}
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all resize-none"
-                                        placeholder="Brief description of the IPO..."
-                                    />
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Description</label>
+                                    <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="form-input resize-none" placeholder="Brief description of the IPO..." />
                                 </div>
                             </div>
-                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setIsModalOpen(false);
-                                        resetForm();
-                                    }}
-                                    className="px-6 py-2.5 border-2 border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-all font-semibold"
-                                >
+                            <div className="flex justify-end gap-2 pt-4 border-t border-white/[0.07]">
+                                <button type="button" onClick={() => { setIsModalOpen(false); resetForm(); }} className="px-5 py-2 border border-white/[0.1] text-slate-400 hover:text-white hover:border-white/[0.2] rounded-xl text-sm font-semibold transition-all">
                                     Cancel
                                 </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-violet-700 text-white rounded-xl hover:from-violet-700 hover:to-violet-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-violet-500/30 font-semibold"
-                                >
-                                    {isSubmitting ? (
-                                        <span className="flex items-center gap-2">
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Saving...
-                                        </span>
-                                    ) : (
-                                        editingIPO ? 'Update IPO' : 'Add IPO'
-                                    )}
+                                <button type="submit" disabled={isSubmitting} className="px-5 py-2 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 hover:border-violet-500/50 text-violet-300 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                    {isSubmitting ? <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Saving...</span> : editingIPO ? 'Update IPO' : 'Add IPO'}
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* View Applications Modal */}
+            {viewApplicationsIPO && (
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#0f1520] border border-white/[0.1] rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.07]">
+                            <div>
+                                <h2 className="text-lg font-bold text-white">Applications — <span className="text-violet-400 mono">{viewApplicationsIPO.symbol}</span></h2>
+                                <p className="text-xs text-slate-500 mt-0.5">{viewApplicationsIPO.company} · {viewApplicationsIPO.applications?.length || 0} applications</p>
+                            </div>
+                            <button onClick={() => setViewApplicationsIPO(null)} className="p-2 text-slate-600 hover:text-slate-300 hover:bg-white/[0.05] rounded-lg transition-all">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            {viewApplicationsIPO.applications && viewApplicationsIPO.applications.length > 0 ? (
+                                <div className="space-y-5">
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {[
+                                            { label: 'Total Applied', value: viewApplicationsIPO.applications.length, color: '#06b6d4', bg: 'rgba(6,182,212,0.08)', border: 'rgba(6,182,212,0.2)' },
+                                            { label: 'Allotted', value: viewApplicationsIPO.applications.filter(a => a.status === 'allotted').length, color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.2)' },
+                                            { label: 'Not Allotted', value: viewApplicationsIPO.applications.filter(a => a.status === 'not_allotted').length, color: '#f87171', bg: 'rgba(248,113,113,0.08)', border: 'rgba(248,113,113,0.2)' },
+                                        ].map(s => (
+                                            <div key={s.label} className="p-4 rounded-xl text-center" style={{background: s.bg, border: `1px solid ${s.border}`}}>
+                                                <div className="mono text-2xl font-bold" style={{color: s.color}}>{s.value}</div>
+                                                <div className="text-xs text-slate-500 mt-0.5">{s.label}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full">
+                                            <thead>
+                                                <tr className="border-b border-white/[0.06]">
+                                                    {['User', 'Shares Applied', 'Amount', 'Applied Date', 'Status'].map(h => (
+                                                        <th key={h} className={`px-4 py-2.5 text-[10px] mono font-bold text-slate-600 uppercase tracking-wider ${h === 'Shares Applied' || h === 'Amount' ? 'text-right' : h === 'Status' ? 'text-center' : 'text-left'}`}>{h}</th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-white/[0.04]">
+                                                {viewApplicationsIPO.applications.map((app, index) => (
+                                                    <tr key={index} className="hover:bg-white/[0.02]">
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center flex-shrink-0">
+                                                                    <UserIcon className="w-3.5 h-3.5 text-violet-400" />
+                                                                </div>
+                                                                <div>
+                                                                    <div className="text-sm font-semibold text-slate-200">{app.userId?.name || 'Unknown'}</div>
+                                                                    <div className="text-xs text-slate-600">{app.userId?.email || ''}</div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right mono text-sm font-semibold text-slate-200">{app.sharesApplied.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right mono text-sm text-slate-400">₹{(app.sharesApplied * viewApplicationsIPO.issuePrice).toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500">{new Date(app.appliedDate).toLocaleDateString()}</td>
+                                                        <td className="px-4 py-3 text-center">
+                                                            {app.status === 'pending' && <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full text-xs mono"><Clock className="w-3 h-3" />Pending</span>}
+                                                            {app.status === 'allotted' && <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs mono"><CheckCircle className="w-3 h-3" />Allotted</span>}
+                                                            {app.status === 'not_allotted' && <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-full text-xs mono"><XCircle className="w-3 h-3" />Rejected</span>}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-3">
+                                        <Users className="w-6 h-6 text-slate-700" />
+                                    </div>
+                                    <p className="text-sm text-slate-500">No applications yet for this IPO</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

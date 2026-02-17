@@ -1,10 +1,42 @@
 # 📈 Nepali Stock Market Application
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![Status](https://img.shields.io/badge/status-Active-green)
-![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-Still_in_Progress-orange)
+
+> [!IMPORTANT]
+> **Project Status: 🚧 Still in progress**
+> This application is currently under active development. Some features may be incomplete or undergoing changes.
 
 > A comprehensive full-stack web application for tracking Nepali stock market data, IPOs, news, and portfolio management with real-time updates.
+
+---
+
+## 📸 Screenshots
+
+<div align="center">
+
+### Home / Dashboard
+![Dashboard](frontend/public/first.png)
+
+### Market Data
+![Market](frontend/public/second.png)
+
+### IPO Management
+![IPO](frontend/public/third.png)
+
+### News Feed
+![News](frontend/public/fourth.png)
+
+### Portfolio Tracking
+![Portfolio](frontend/public/fifth.png)
+
+### User Settings
+![Settings](frontend/public/sixth.png)
+
+### Admin Overview
+![Admin](frontend/public/seventh.png)
+
+</div>
 
 ---
 
@@ -319,7 +351,7 @@ For support and questions, please open an issue on GitHub.
 
 ## 🔄 Project Status
 
-> ✅ **This project is still in progress**
+> 🚧 **This project is still in progress**
 
 ### Completed Features:
 - ✅ User authentication (JWT) with role-based access
@@ -336,6 +368,6 @@ For support and questions, please open an issue on GitHub.
 
 **Built with ❤️ for the Nepali Stock Market Community**
 
-© 2024-2026 Nepali Stock Market Application. All rights reserved.
+
 
 </div>
