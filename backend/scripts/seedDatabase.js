@@ -28,18 +28,30 @@ const seedData = async () => {
     // Create sample users
     const users = await User.create([
       {
-        email: 'user@example.com',
-        password: '123456',
-        name: 'John Doe',
-        role: 'user',
-        isVerified: true,
-      },
-      {
-        email: 'admin@example.com',
-        password: '123456',
+        email: 'admin@stockapp.com',
+        password: 'admin123',
         name: 'Admin User',
         role: 'admin',
         isVerified: true,
+        phone: '+977-9841000001',
+        crnNumber: 'CRN-2024-001',
+        boidNumber: '1301000000000001',
+        dematAccountType: 'CDS',
+        brokerName: 'Arrowhead Securities',
+        brokerNumber: 'AS-001',
+      },
+      {
+        email: 'user@stockapp.com',
+        password: 'user123',
+        name: 'Regular User',
+        role: 'user',
+        isVerified: true,
+        phone: '+977-9841000002',
+        crnNumber: 'CRN-2024-002',
+        boidNumber: '1301000000000002',
+        dematAccountType: 'NMB',
+        brokerName: 'Laxmi Capital Services',
+        brokerNumber: 'LCS-042',
       },
     ]);
 
@@ -301,7 +313,7 @@ const seedData = async () => {
           throw error;
         }
       }
-      
+
       try {
         await Watchlist.create({ userId: user._id });
       } catch (error) {
@@ -317,6 +329,8 @@ const seedData = async () => {
 
     console.log('\n✅ Database seeded successfully!');
     console.log(`👥 Users: ${users.length}`);
+    console.log(`   - Admin: admin@stockapp.com / admin123`);
+    console.log(`   - User: user@stockapp.com / user123`);
     console.log(`📊 Stocks: ${stocks.length}`);
     console.log(`📰 News: ${news.length}`);
     console.log(`🏢 IPOs: ${ipos.length}`);

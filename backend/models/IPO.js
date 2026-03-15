@@ -85,7 +85,7 @@ const ipoSchema = new mongoose.Schema(
         },
         status: {
           type: String,
-          enum: ['pending', 'allotted', 'not_allotted'],
+          enum: ['pending', 'verified', 'allotted', 'not_allotted'],
           default: 'pending',
         },
         sharesAllotted: {

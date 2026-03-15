@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -21,7 +23,7 @@ body {
     background: linear-gradient(to bottom,
             transparent,
             rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'DM Sans', system-ui, sans-serif;
 }
 
 @layer utilities {
@@ -185,4 +187,99 @@ textarea:focus {
 
 .hide-scrollbar::-webkit-scrollbar {
     display: none;
+}
+
+/* Admin Layout Styles */
+.sidebar-link-active {
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.15) 0%, rgba(6, 182, 212, 0.05) 100%);
+    border-left: 2px solid #06b6d4;
+    color: #06b6d4;
+}
+
+.sidebar-link:hover {
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.08) 0%, transparent 100%);
+}
+
+.glass-header {
+    background: rgba(8, 12, 20, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.glass-sidebar {
+    background: rgba(8, 12, 20, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.grid-bg {
+    background-image: linear-gradient(rgba(6, 182, 212, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(6, 182, 212, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+.mono {
+    font-family: 'Space Mono', monospace;
+}
+
+/* Table Styles */
+.table-row:hover {
+    background: rgba(255, 255, 255, 0.025);
+}
+
+/* Form Input */
+.form-input {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.form-input:focus {
+    border-color: rgba(16, 185, 129, 0.5);
+    background: rgba(16, 185, 129, 0.04);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.form-input::placeholder {
+    color: rgba(148, 163, 184, 0.5);
+}
+
+/* Card Glass */
+.card-glass {
+    background: rgba(13, 20, 32, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Animation */
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeSlideIn 0.35s ease forwards;
+}
+
+/* User Layout Sidebar Styles */
+.user-sidebar-link-active {
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border-left: 2px solid #10b981;
+    color: #10b981;
+}
+
+.user-sidebar-link:hover {
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%);
 }

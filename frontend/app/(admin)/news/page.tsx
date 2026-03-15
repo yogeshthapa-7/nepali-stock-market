@@ -108,18 +108,17 @@ export default function AdminNewsPage() {
         setIsModalOpen(true);
     };
 
-    const categoryConfig: Record<string, {bg: string, text: string, border: string}> = {
-        market:    { bg: 'rgba(6,182,212,0.1)',   text: '#06b6d4', border: 'rgba(6,182,212,0.2)' },
-        ipo:       { bg: 'rgba(167,139,250,0.1)', text: '#a78bfa', border: 'rgba(167,139,250,0.2)' },
-        corporate: { bg: 'rgba(16,185,129,0.1)',  text: '#10b981', border: 'rgba(16,185,129,0.2)' },
-        economy:   { bg: 'rgba(245,158,11,0.1)',  text: '#f59e0b', border: 'rgba(245,158,11,0.2)' },
-        analysis:  { bg: 'rgba(20,184,166,0.1)',  text: '#14b8a6', border: 'rgba(20,184,166,0.2)' },
+    const categoryConfig: Record<string, { bg: string, text: string, border: string }> = {
+        market: { bg: 'rgba(6,182,212,0.1)', text: '#06b6d4', border: 'rgba(6,182,212,0.2)' },
+        ipo: { bg: 'rgba(167,139,250,0.1)', text: '#a78bfa', border: 'rgba(167,139,250,0.2)' },
+        corporate: { bg: 'rgba(16,185,129,0.1)', text: '#10b981', border: 'rgba(16,185,129,0.2)' },
+        economy: { bg: 'rgba(245,158,11,0.1)', text: '#f59e0b', border: 'rgba(245,158,11,0.2)' },
+        analysis: { bg: 'rgba(20,184,166,0.1)', text: '#14b8a6', border: 'rgba(20,184,166,0.2)' },
     };
 
     return (
         <div className="space-y-5">
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
                 * { font-family: 'DM Sans', sans-serif; }
                 .mono { font-family: 'Space Mono', monospace; }
                 .table-row:hover { background: rgba(255,255,255,0.025); }
@@ -176,7 +175,7 @@ export default function AdminNewsPage() {
                         value={categoryFilter}
                         onChange={(e) => setCategoryFilter(e.target.value)}
                         className="pl-9 pr-8 py-2.5 bg-[#0d1420] border border-white/[0.07] hover:border-white/[0.12] focus:border-amber-500/40 rounded-xl text-sm text-slate-400 outline-none transition-all appearance-none"
-                        style={{minWidth: '160px'}}
+                        style={{ minWidth: '160px' }}
                     >
                         <option value="">All Categories</option>
                         <option value="market">Market</option>
@@ -227,7 +226,7 @@ export default function AdminNewsPage() {
                                                 </div>
                                             </td>
                                             <td className="px-5 py-3.5 whitespace-nowrap">
-                                                <span className="inline-flex px-2.5 py-1 rounded-lg mono text-[10px] font-bold uppercase tracking-wider" style={{background: cc.bg, color: cc.text, border: `1px solid ${cc.border}`}}>
+                                                <span className="inline-flex px-2.5 py-1 rounded-lg mono text-[10px] font-bold uppercase tracking-wider" style={{ background: cc.bg, color: cc.text, border: `1px solid ${cc.border}` }}>
                                                     {item.category}
                                                 </span>
                                             </td>

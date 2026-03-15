@@ -115,7 +115,6 @@ export default function AdminUsersPage() {
     return (
         <div className="space-y-5">
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
                 * { font-family: 'DM Sans', sans-serif; }
                 .mono { font-family: 'Space Mono', monospace; }
                 .table-row:hover { background: rgba(255,255,255,0.025); }
@@ -200,8 +199,8 @@ export default function AdminUsersPage() {
                                         <tr key={user._id} className="table-row transition-colors">
                                             <td className="px-5 py-3.5 whitespace-nowrap">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{background: avatarColor.bg, border: `1px solid ${avatarColor.border}`}}>
-                                                        <span className="mono text-xs font-bold" style={{color: avatarColor.text}}>{user.name.charAt(0).toUpperCase()}</span>
+                                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: avatarColor.bg, border: `1px solid ${avatarColor.border}` }}>
+                                                        <span className="mono text-xs font-bold" style={{ color: avatarColor.text }}>{user.name.charAt(0).toUpperCase()}</span>
                                                     </div>
                                                     <span className="text-sm font-semibold text-slate-200">{user.name}</span>
                                                 </div>

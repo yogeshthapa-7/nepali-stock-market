@@ -62,6 +62,37 @@ const stockSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    // Market Depth (Order Book) - Simulated
+    orderBook: {
+      buy: [
+        {
+          price: Number,
+          quantity: Number,
+        },
+      ],
+      sell: [
+        {
+          price: Number,
+          quantity: Number,
+        },
+      ],
+    },
+    // Company Financials
+    financials: {
+      revenue: Number,
+      profit: Number,
+      assets: Number,
+      equity: Number,
+      bookValue: Number,
+      dividend: Number,
+      dividendYield: Number,
+      fiscalYear: String,
+    },
+    // Sector classification
+    sector: {
+      type: String,
+      default: 'General',
+    },
     isActive: {
       type: Boolean,
       default: true,

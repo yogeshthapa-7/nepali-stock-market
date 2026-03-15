@@ -58,8 +58,8 @@ export default function AdminLayout({
             <TrendingUp className="w-6 h-6 text-cyan-400 animate-pulse" />
           </div>
           <div className="flex gap-1.5">
-            {[0,1,2].map(i => (
-              <div key={i} className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{animationDelay: `${i * 0.15}s`}} />
+            {[0, 1, 2].map(i => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
             ))}
           </div>
         </div>
@@ -68,35 +68,11 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#080c14]">
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-        .mono { font-family: 'Space Mono', monospace; }
-        .sidebar-link-active {
-          background: linear-gradient(90deg, rgba(6,182,212,0.15) 0%, rgba(6,182,212,0.05) 100%);
-          border-left: 2px solid #06b6d4;
-          color: #06b6d4;
-        }
-        .sidebar-link:hover {
-          background: linear-gradient(90deg, rgba(6,182,212,0.08) 0%, transparent 100%);
-        }
-        .glass-header {
-          background: rgba(8, 12, 20, 0.85);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-        }
-        .glass-sidebar {
-          background: rgba(8, 12, 20, 0.6);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-        }
-        .grid-bg {
-          background-image: linear-gradient(rgba(6,182,212,0.04) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(6,182,212,0.04) 1px, transparent 1px);
-          background-size: 40px 40px;
-        }
-      `}</style>
+    <div className="min-h-screen bg-[#080c14] font-['DM_Sans']" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+      />
 
       {/* Top Navigation */}
       <header className="glass-header border-b border-white/[0.06] sticky top-0 z-50">
@@ -113,7 +89,7 @@ export default function AdminLayout({
                 <div className="relative w-9 h-9">
                   <div className="absolute inset-0 bg-cyan-400/20 rounded-xl blur-sm group-hover:bg-cyan-400/30 transition-colors" />
                   <div className="relative w-9 h-9 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-xl flex items-center justify-center">
-                    <TrendingUp className="w-4.5 h-4.5 text-white" style={{width:'18px',height:'18px'}} />
+                    <TrendingUp className="w-4.5 h-4.5 text-white" style={{ width: '18px', height: '18px' }} />
                   </div>
                 </div>
                 <div>
@@ -208,9 +184,11 @@ export default function AdminLayout({
       </div>
 
       {/* Mobile overlay */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 md:hidden" onClick={() => setIsOpen(false)} />
-      )}
-    </div>
+      {
+        isOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 md:hidden" onClick={() => setIsOpen(false)} />
+        )
+      }
+    </div >
   );
 }

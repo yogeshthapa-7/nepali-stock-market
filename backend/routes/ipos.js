@@ -166,4 +166,263 @@ router.post('/:symbol/apply', verifyToken, async (req, res, next) => {
   }
 });
 
+// Update IPO application status (admin only)
+router.put('/:symbol/applications/:userId/status', verifyToken, requireAdmin, async (req, res, next) => {
+  try {
+    const { status, sharesAllotted } = req.body;
+
+    // Validate status
+    const validStatuses = ['pending', 'verified', 'allotted', 'not_allotted'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const ipo = await IPO.findOne({ symbol: req.params.symbol.toUpperCase() });
+    if (!ipo) {
+      return res.status(404).json({ message: 'IPO not found' });
+    }
+
+    // Find the application
+    const application = ipo.applications.find(
+      app => app.userId.toString() === req.params.userId
+    );
+
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    // Update application status
+    application.status = status;
+
+    if (status === 'allotted') {
+      application.sharesAllotted = sharesAllotted || application.sharesApplied;
+    } else if (status === 'not_allotted') {
+      // Return shares to available pool
+      ipo.sharesAvailable = ipo.sharesAvailable + application.sharesApplied;
+      application.sharesAllotted = 0;
+    }
+
+    await ipo.save();
+
+    // Also update in user's portfolio
+    let portfolio = await Portfolio.findOne({ userId: req.params.userId });
+    if (!portfolio) {
+      portfolio = new Portfolio({ userId: req.params.userId });
+      console.log(`[SYNC] Created new portfolio for user ${req.params.userId}`);
+    }
+
+    const ipoIdStr = ipo._id.toString();
+
+    // 1. Update status in appliedIPOs
+    const appliedIndex = portfolio.appliedIPOs.findIndex(
+      app => app.ipoId && app.ipoId.toString() === ipoIdStr
+    );
+    
+    if (appliedIndex !== -1) {
+      portfolio.appliedIPOs[appliedIndex].status = status;
+      if (status === 'allotted') {
+        portfolio.appliedIPOs[appliedIndex].sharesAllotted = sharesAllotted || portfolio.appliedIPOs[appliedIndex].sharesApplied;
+      }
+      console.log(`[SYNC] Updated appliedIPOs for user ${req.params.userId}, status: ${status}`);
+    } else {
+      portfolio.appliedIPOs.push({
+        ipoId: ipo._id,
+        sharesApplied: application.sharesApplied,
+        applicationDate: application.applicationDate,
+        status: status,
+        sharesAllotted: status === 'allotted' ? (sharesAllotted || application.sharesApplied) : 0
+      });
+      console.log(`[SYNC] Added to appliedIPOs for user ${req.params.userId}, status: ${status}`);
+    }
+
+    // 2. Manage allottedIPOs array
+    if (status === 'allotted') {
+      const existingAllottedIndex = portfolio.allottedIPOs.findIndex(
+        a => a.ipoId && a.ipoId.toString() === ipoIdStr
+      );
+      if (existingAllottedIndex === -1) {
+        portfolio.allottedIPOs.push({
+          ipoId: ipo._id,
+          sharesAllotted: sharesAllotted || application.sharesApplied,
+          allotmentDate: new Date(),
+          costPrice: ipo.issuePrice
+        });
+        console.log(`[SYNC] Pushed to allottedIPOs for user ${req.params.userId}`);
+      } else {
+        portfolio.allottedIPOs[existingAllottedIndex].sharesAllotted = sharesAllotted || application.sharesApplied;
+        console.log(`[SYNC] Updated allottedIPOs for user ${req.params.userId}`);
+      }
+      portfolio.notAllottedIPOs = portfolio.notAllottedIPOs.filter(
+        n => n.ipoId && n.ipoId.toString() !== ipoIdStr
+      );
+    } 
+    
+    // 3. Manage notAllottedIPOs array
+    else if (status === 'not_allotted') {
+      const existingNotAllottedIndex = portfolio.notAllottedIPOs.findIndex(
+        n => n.ipoId && n.ipoId.toString() === ipoIdStr
+      );
+      if (existingNotAllottedIndex === -1) {
+        portfolio.notAllottedIPOs.push({
+          ipoId: ipo._id,
+          sharesApplied: application.sharesApplied,
+          applicationDate: application.applicationDate
+        });
+        console.log(`[SYNC] Pushed to notAllottedIPOs for user ${req.params.userId}`);
+      }
+      portfolio.allottedIPOs = portfolio.allottedIPOs.filter(
+        a => a.ipoId && a.ipoId.toString() !== ipoIdStr
+      );
+    }
+    
+    // 4. Cleanup if back to pending/verified
+    else {
+      portfolio.allottedIPOs = portfolio.allottedIPOs.filter(
+        a => a.ipoId && a.ipoId.toString() !== ipoIdStr
+      );
+      portfolio.notAllottedIPOs = portfolio.notAllottedIPOs.filter(
+        n => n.ipoId && n.ipoId.toString() !== ipoIdStr
+      );
+      console.log(`[SYNC] Cleaned up allotted/notAllotted arrays for user ${req.params.userId}`);
+    }
+
+    await portfolio.save();
+
+    res.json({
+      message: 'Application status updated successfully',
+      application,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Bulk update IPO application statuses (admin only)
+router.put('/:symbol/applications/bulk-status', verifyToken, requireAdmin, async (req, res, next) => {
+  try {
+    const { applicationIds, status, sharesAllotted } = req.body;
+
+    // Validate status
+    const validStatuses = ['pending', 'verified', 'allotted', 'not_allotted'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    if (!applicationIds || !Array.isArray(applicationIds)) {
+      return res.status(400).json({ message: 'Application IDs array required' });
+    }
+
+    const ipo = await IPO.findOne({ symbol: req.params.symbol.toUpperCase() });
+    if (!ipo) {
+      return res.status(404).json({ message: 'IPO not found' });
+    }
+
+    const updatedApplications = [];
+    let totalSharesToReturn = 0;
+
+    for (const userId of applicationIds) {
+      const application = ipo.applications.find(
+        app => app.userId.toString() === userId
+      );
+
+      if (application) {
+        application.status = status;
+
+        if (status === 'allotted') {
+          application.sharesAllotted = sharesAllotted || application.sharesApplied;
+        } else if (status === 'not_allotted') {
+          totalSharesToReturn += application.sharesApplied;
+          application.sharesAllotted = 0;
+        }
+
+        updatedApplications.push(application);
+
+        // Sync to Portfolio
+        let portfolio = await Portfolio.findOne({ userId });
+        if (!portfolio) {
+          portfolio = new Portfolio({ userId });
+          console.log(`Created new portfolio for user ${userId} during bulk IPO update`);
+        }
+
+        const ipoIdStr = ipo._id.toString();
+
+        const appliedIndex = portfolio.appliedIPOs.findIndex(
+          app => app.ipoId && app.ipoId.toString() === ipoIdStr
+        );
+        
+        if (appliedIndex !== -1) {
+          portfolio.appliedIPOs[appliedIndex].status = status;
+          if (status === 'allotted') {
+            portfolio.appliedIPOs[appliedIndex].sharesAllotted = sharesAllotted || portfolio.appliedIPOs[appliedIndex].sharesApplied;
+          }
+        } else {
+          portfolio.appliedIPOs.push({
+            ipoId: ipo._id,
+            sharesApplied: application.sharesApplied,
+            applicationDate: application.applicationDate,
+            status: status,
+            sharesAllotted: status === 'allotted' ? (sharesAllotted || application.sharesApplied) : 0
+          });
+        }
+
+        if (status === 'allotted') {
+          const existingAllottedIndex = portfolio.allottedIPOs.findIndex(
+            a => a.ipoId && a.ipoId.toString() === ipoIdStr
+          );
+          if (existingAllottedIndex === -1) {
+            portfolio.allottedIPOs.push({
+              ipoId: ipo._id,
+              sharesAllotted: sharesAllotted || application.sharesApplied,
+              allotmentDate: new Date(),
+              costPrice: ipo.issuePrice
+            });
+            console.log(`[BULK-SYNC] Pushed to allottedIPOs for user ${userId}`);
+          } else {
+            portfolio.allottedIPOs[existingAllottedIndex].sharesAllotted = sharesAllotted || application.sharesApplied;
+          }
+          portfolio.notAllottedIPOs = portfolio.notAllottedIPOs.filter(
+            n => n.ipoId && n.ipoId.toString() !== ipoIdStr
+          );
+        } else if (status === 'not_allotted') {
+          const existingNotAllottedIndex = portfolio.notAllottedIPOs.findIndex(
+            n => n.ipoId && n.ipoId.toString() === ipoIdStr
+          );
+          if (existingNotAllottedIndex === -1) {
+            portfolio.notAllottedIPOs.push({
+              ipoId: ipo._id,
+              sharesApplied: application.sharesApplied,
+              applicationDate: application.applicationDate
+            });
+          }
+          portfolio.allottedIPOs = portfolio.allottedIPOs.filter(
+            a => a.ipoId && a.ipoId.toString() !== ipoIdStr
+          );
+        } else {
+          portfolio.allottedIPOs = portfolio.allottedIPOs.filter(
+            a => a.ipoId && a.ipoId.toString() !== ipoIdStr
+          );
+          portfolio.notAllottedIPOs = portfolio.notAllottedIPOs.filter(
+            n => n.ipoId && n.ipoId.toString() !== ipoIdStr
+          );
+        }
+        await portfolio.save();
+      }
+    }
+
+    // Return shares to pool if marking as not_allotted
+    if (status === 'not_allotted') {
+      ipo.sharesAvailable = ipo.sharesAvailable + totalSharesToReturn;
+    }
+
+    await ipo.save();
+
+    res.json({
+      message: `Updated ${updatedApplications.length} applications to ${status}`,
+      count: updatedApplications.length,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

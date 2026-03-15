@@ -33,6 +33,42 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    // Demat Account Information (Mero Share style)
+    crnNumber: {
+      type: String,
+      default: null,
+      description: 'Customer Relationship Number for CDS',
+    },
+    boidNumber: {
+      type: String,
+      default: null,
+      description: 'Beneficiary Owner ID for demat account',
+    },
+    dematAccountType: {
+      type: String,
+      enum: ['CDS', 'NMB', 'NIC', 'Prabhu', 'Laxmi', 'Sanima', null],
+      default: null,
+    },
+    // Broker information
+    brokerName: {
+      type: String,
+      default: null,
+    },
+    brokerNumber: {
+      type: String,
+      default: null,
+    },
+    // Phone number
+    phone: {
+      type: String,
+      default: null,
+    },
+    // Share balance (simulated from demat)
+    shareBalance: {
+      type: Map,
+      of: Number,
+      default: {},
+    },
     createdAt: {
       type: Date,
       default: Date.now,

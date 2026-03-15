@@ -17,7 +17,7 @@ const portfolioSchema = new mongoose.Schema(
         applicationDate: Date,
         status: {
           type: String,
-          enum: ['pending', 'allotted', 'not_allotted'],
+          enum: ['pending', 'verified', 'allotted', 'not_allotted'],
           default: 'pending',
         },
       },
@@ -43,6 +43,30 @@ const portfolioSchema = new mongoose.Schema(
         applicationDate: Date,
       },
     ],
+    // Dividend Income Tracking
+    dividends: [
+      {
+        stockId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Stock',
+        },
+        dividendPerShare: Number,
+        totalShares: Number,
+        totalAmount: Number,
+        dividendDate: Date,
+        fiscalYear: String,
+        status: {
+          type: String,
+          enum: ['announced', 'paid', 'pending'],
+          default: 'announced',
+        },
+      },
+    ],
+    // Total dividend income received
+    totalDividendReceived: {
+      type: Number,
+      default: 0,
+    },
     ownedStocks: [
       {
         stockId: {

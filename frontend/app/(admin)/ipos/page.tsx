@@ -17,8 +17,122 @@ import {
     XCircle,
     Clock,
     User as UserIcon,
+    ChevronDown,
+    Check,
 } from 'lucide-react';
 import { iposAPI, IPO } from '@/lib/api';
+
+// Status Dropdown Component
+function StatusDropdown({
+    currentStatus,
+    onStatusChange,
+    issuePrice
+}: {
+    currentStatus: string;
+    onStatusChange: (status: string, shares?: number) => void;
+    issuePrice: number;
+}) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [sharesInput, setSharesInput] = useState('');
+    const [showSharesInput, setShowSharesInput] = useState(false);
+
+    const statuses = [
+        { value: 'pending', label: 'Pending', color: '#06b6d4' },
+        { value: 'verified', label: 'Verified', color: '#a855f7' },
+        { value: 'allotted', label: 'Allotted', color: '#10b981' },
+        { value: 'not_allotted', label: 'Not Allotted', color: '#f87171' },
+    ];
+
+    const current = statuses.find(s => s.value === currentStatus) || statuses[0];
+
+    const handleSelect = (status: string) => {
+        if (status === 'allotted') {
+            setShowSharesInput(true);
+        } else {
+            setIsOpen(false);
+            onStatusChange(status);
+        }
+    };
+
+    const handleAllot = () => {
+        const shares = parseInt(sharesInput) || 0;
+        if (shares > 0) {
+            setIsOpen(false);
+            setShowSharesInput(false);
+            setSharesInput('');
+            onStatusChange('allotted', shares);
+        }
+    };
+
+    return (
+        <div className="relative">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all hover:opacity-80"
+                style={{
+                    background: `${current.color}15`,
+                    color: current.color,
+                    border: `1px solid ${current.color}30`
+                }}
+            >
+                {current.label}
+                <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isOpen && (
+                <div className="absolute right-0 top-full mt-2 w-40 bg-[#161b26]/95 backdrop-blur-md border border-white/10 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                    <div className="py-1.5">
+                        {statuses.map(status => (
+                            <button
+                                key={status.value}
+                                onClick={() => handleSelect(status.value)}
+                                className={`w-full px-4 py-2 text-left text-[11px] font-semibold flex items-center justify-between hover:bg-white/5 transition-all ${currentStatus === status.value ? 'bg-white/5 text-white' : 'text-slate-400'}`}
+                            >
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-1.5 h-1.5 rounded-full" style={{ background: status.color }} />
+                                    <span>{status.label}</span>
+                                </div>
+                                {currentStatus === status.value && <Check className="w-3 h-3 text-violet-400" />}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {showSharesInput && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-[#161b26]/95 backdrop-blur-md border border-white/10 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] z-50 p-4 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2.5">Allot Shares</p>
+                    <input
+                        type="number"
+                        min="1"
+                        value={sharesInput}
+                        onChange={(e) => setSharesInput(e.target.value)}
+                        placeholder="Number of shares"
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-xs text-white mb-2.5 focus:border-violet-500/50 outline-none transition-all"
+                    />
+                    <div className="text-[11px] text-slate-400 mb-3 flex justify-between">
+                        <span>Total Amount:</span>
+                        <span className="text-white font-bold">₹{(parseInt(sharesInput) || 0) * issuePrice}</span>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => { setShowSharesInput(false); setIsOpen(false); }}
+                            className="flex-1 px-3 py-1.5 text-xs text-slate-400 border border-white/10 rounded-lg hover:bg-white/5 transition-all"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleAllot}
+                            className="flex-1 px-3 py-1.5 text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/30 transition-all font-bold"
+                        >
+                            Allot
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
 
 export default function AdminIPOsPage() {
     const [ipos, setIpos] = useState<IPO[]>([]);
@@ -153,35 +267,43 @@ export default function AdminIPOsPage() {
         setIsModalOpen(true);
     };
 
-    const statusConfig: Record<string, {bg: string, text: string, border: string, dot: string}> = {
-        open:     { bg: 'rgba(16,185,129,0.1)',  text: '#10b981', border: 'rgba(16,185,129,0.25)',  dot: '#10b981' },
-        upcoming: { bg: 'rgba(6,182,212,0.1)',   text: '#06b6d4', border: 'rgba(6,182,212,0.25)',   dot: '#06b6d4' },
-        closed:   { bg: 'rgba(100,116,139,0.1)', text: '#94a3b8', border: 'rgba(100,116,139,0.25)', dot: '#94a3b8' },
+    const statusConfig: Record<string, { bg: string, text: string, border: string, dot: string }> = {
+        open: { bg: 'rgba(16,185,129,0.1)', text: '#10b981', border: 'rgba(16,185,129,0.25)', dot: '#10b981' },
+        upcoming: { bg: 'rgba(6,182,212,0.1)', text: '#06b6d4', border: 'rgba(6,182,212,0.25)', dot: '#06b6d4' },
+        closed: { bg: 'rgba(100,116,139,0.1)', text: '#94a3b8', border: 'rgba(100,116,139,0.25)', dot: '#94a3b8' },
         allotted: { bg: 'rgba(167,139,250,0.1)', text: '#a78bfa', border: 'rgba(167,139,250,0.25)', dot: '#a78bfa' },
+    };
+
+    const applicationStatusConfig: Record<string, { bg: string, text: string, border: string, icon: any }> = {
+        pending: { bg: 'rgba(6,182,212,0.1)', text: '#06b6d4', border: 'rgba(6,182,212,0.25)', icon: Clock },
+        verified: { bg: 'rgba(168,85,247,0.1)', text: '#a855f7', border: 'rgba(168,85,247,0.25)', icon: Eye },
+        allotted: { bg: 'rgba(16,185,129,0.1)', text: '#10b981', border: 'rgba(16,185,129,0.25)', icon: CheckCircle },
+        not_allotted: { bg: 'rgba(248,113,113,0.1)', text: '#f87171', border: 'rgba(248,113,113,0.25)', icon: XCircle },
+    };
+
+    const handleStatusChange = async (symbol: string, userId: string, newStatus: string, sharesAllotted?: number) => {
+        console.log('Input params:', { symbol, userId, newStatus, sharesAllotted });
+        console.log('userId type:', typeof userId, 'userId value:', userId);
+        try {
+            await iposAPI.updateApplicationStatus(
+                symbol,
+                userId,
+                newStatus as 'pending' | 'verified' | 'allotted' | 'not_allotted',
+                sharesAllotted
+            );
+            // Refresh the IPOs data
+            fetchIPOs();
+            // Also refresh the current view
+            const updatedIPO = await iposAPI.getBySymbol(symbol);
+            setViewApplicationsIPO(updatedIPO.ipo);
+        } catch (error) {
+            console.error('Failed to update status:', error);
+            alert('Failed to update application status. Please try again.');
+        }
     };
 
     return (
         <div className="space-y-5">
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
-                * { font-family: 'DM Sans', sans-serif; }
-                .mono { font-family: 'Space Mono', monospace; }
-                .table-row:hover { background: rgba(255,255,255,0.025); }
-                .form-input {
-                    width: 100%;
-                    padding: 10px 14px;
-                    background: rgba(255,255,255,0.04);
-                    border: 1px solid rgba(255,255,255,0.1);
-                    border-radius: 10px;
-                    color: white;
-                    font-size: 14px;
-                    transition: all 0.2s;
-                    outline: none;
-                }
-                .form-input:focus { border-color: rgba(167,139,250,0.5); background: rgba(167,139,250,0.05); box-shadow: 0 0 0 3px rgba(167,139,250,0.1); }
-                .form-input::placeholder { color: rgba(148,163,184,0.5); }
-                .form-input option { background: #1a1f2e; color: white; }
-            `}</style>
 
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -220,7 +342,7 @@ export default function AdminIPOsPage() {
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
                         className="pl-9 pr-8 py-2.5 bg-[#0d1420] border border-white/[0.07] hover:border-white/[0.12] focus:border-violet-500/40 rounded-xl text-sm text-slate-400 outline-none transition-all appearance-none"
-                        style={{minWidth: '140px'}}
+                        style={{ minWidth: '140px' }}
                     >
                         <option value="">All Status</option>
                         <option value="upcoming">Upcoming</option>
@@ -276,8 +398,8 @@ export default function AdminIPOsPage() {
                                                 <div className="text-xs text-slate-600 mt-0.5">{ipo.company}</div>
                                             </td>
                                             <td className="px-5 py-3.5 whitespace-nowrap">
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg mono text-[10px] font-bold uppercase tracking-wider" style={{background: sc.bg, color: sc.text, border: `1px solid ${sc.border}`}}>
-                                                    <div className="w-1.5 h-1.5 rounded-full" style={{background: sc.dot}} />
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg mono text-[10px] font-bold uppercase tracking-wider" style={{ background: sc.bg, color: sc.text, border: `1px solid ${sc.border}` }}>
+                                                    <div className="w-1.5 h-1.5 rounded-full" style={{ background: sc.dot }} />
                                                     {ipo.status}
                                                 </span>
                                             </td>
@@ -421,7 +543,7 @@ export default function AdminIPOsPage() {
             {/* View Applications Modal */}
             {viewApplicationsIPO && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
-                    <div className="bg-[#0f1520] border border-white/[0.1] rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                    <div className="bg-[#0f1520] border border-white/[0.1] rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-y-auto">
                         <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.07]">
                             <div>
                                 <h2 className="text-lg font-bold text-white">Applications — <span className="text-violet-400 mono">{viewApplicationsIPO.symbol}</span></h2>
@@ -434,19 +556,20 @@ export default function AdminIPOsPage() {
                         <div className="p-6">
                             {viewApplicationsIPO.applications && viewApplicationsIPO.applications.length > 0 ? (
                                 <div className="space-y-5">
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-4 gap-3">
                                         {[
                                             { label: 'Total Applied', value: viewApplicationsIPO.applications.length, color: '#06b6d4', bg: 'rgba(6,182,212,0.08)', border: 'rgba(6,182,212,0.2)' },
+                                            { label: 'Verified', value: viewApplicationsIPO.applications.filter(a => a.status === 'verified').length, color: '#a855f7', bg: 'rgba(168,85,247,0.08)', border: 'rgba(168,85,247,0.2)' },
                                             { label: 'Allotted', value: viewApplicationsIPO.applications.filter(a => a.status === 'allotted').length, color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.2)' },
                                             { label: 'Not Allotted', value: viewApplicationsIPO.applications.filter(a => a.status === 'not_allotted').length, color: '#f87171', bg: 'rgba(248,113,113,0.08)', border: 'rgba(248,113,113,0.2)' },
                                         ].map(s => (
-                                            <div key={s.label} className="p-4 rounded-xl text-center" style={{background: s.bg, border: `1px solid ${s.border}`}}>
-                                                <div className="mono text-2xl font-bold" style={{color: s.color}}>{s.value}</div>
+                                            <div key={s.label} className="p-4 rounded-xl text-center" style={{ background: s.bg, border: `1px solid ${s.border}` }}>
+                                                <div className="mono text-2xl font-bold" style={{ color: s.color }}>{s.value}</div>
                                                 <div className="text-xs text-slate-500 mt-0.5">{s.label}</div>
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="overflow-x-auto">
+                                    <div className="overflow-x-auto min-h-[400px]">
                                         <table className="w-full">
                                             <thead>
                                                 <tr className="border-b border-white/[0.06]">
@@ -471,11 +594,25 @@ export default function AdminIPOsPage() {
                                                         </td>
                                                         <td className="px-4 py-3 text-right mono text-sm font-semibold text-slate-200">{app.sharesApplied.toLocaleString()}</td>
                                                         <td className="px-4 py-3 text-right mono text-sm text-slate-400">₹{(app.sharesApplied * viewApplicationsIPO.issuePrice).toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-sm text-slate-500">{new Date(app.appliedDate).toLocaleDateString()}</td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500">
+                                                            {new Date(app.applicationDate).toLocaleDateString()}
+                                                            {app.status === 'allotted' && app.sharesAllotted && (
+                                                                <div className="text-xs text-emerald-400 mt-0.5">
+                                                                    Allotted: {app.sharesAllotted} shares
+                                                                </div>
+                                                            )}
+                                                        </td>
                                                         <td className="px-4 py-3 text-center">
-                                                            {app.status === 'pending' && <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full text-xs mono"><Clock className="w-3 h-3" />Pending</span>}
-                                                            {app.status === 'allotted' && <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs mono"><CheckCircle className="w-3 h-3" />Allotted</span>}
-                                                            {app.status === 'not_allotted' && <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-full text-xs mono"><XCircle className="w-3 h-3" />Rejected</span>}
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <StatusDropdown
+                                                                    currentStatus={app.status}
+                                                                    onStatusChange={(status, shares) => {
+                                                                        const uid = typeof app.userId === 'object' ? (app.userId as any)._id : app.userId;
+                                                                        handleStatusChange(viewApplicationsIPO.symbol, uid, status, shares);
+                                                                    }}
+                                                                    issuePrice={viewApplicationsIPO.issuePrice}
+                                                                />
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}

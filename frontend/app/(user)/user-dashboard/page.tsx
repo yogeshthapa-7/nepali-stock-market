@@ -30,6 +30,8 @@ import {
     Activity,
     PieChart,
     LineChart,
+    Check,
+    ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { stocksAPI, iposAPI, newsAPI, portfolioAPI, Stock, IPO, News, Portfolio } from '@/lib/api';
@@ -133,9 +135,9 @@ export default function UserDashboard() {
     };
 
     const statusConfig: Record<string, { bg: string; text: string; border: string; dot: string }> = {
-        open:     { bg: 'rgba(16,185,129,0.1)',  text: '#10b981', border: 'rgba(16,185,129,0.25)',  dot: '#10b981' },
-        upcoming: { bg: 'rgba(6,182,212,0.1)',   text: '#06b6d4', border: 'rgba(6,182,212,0.25)',   dot: '#06b6d4' },
-        closed:   { bg: 'rgba(100,116,139,0.1)', text: '#94a3b8', border: 'rgba(100,116,139,0.25)', dot: '#94a3b8' },
+        open: { bg: 'rgba(16,185,129,0.1)', text: '#10b981', border: 'rgba(16,185,129,0.25)', dot: '#10b981' },
+        upcoming: { bg: 'rgba(6,182,212,0.1)', text: '#06b6d4', border: 'rgba(6,182,212,0.25)', dot: '#06b6d4' },
+        closed: { bg: 'rgba(100,116,139,0.1)', text: '#94a3b8', border: 'rgba(100,116,139,0.25)', dot: '#94a3b8' },
         allotted: { bg: 'rgba(167,139,250,0.1)', text: '#a78bfa', border: 'rgba(167,139,250,0.25)', dot: '#a78bfa' },
     };
 
@@ -151,12 +153,16 @@ export default function UserDashboard() {
 
     const getApplicationStatus = (ipoId: string) => {
         if (!portfolio) return null;
-        const applied = portfolio.appliedIPOs.find(app => app.ipoId._id === ipoId);
-        if (applied) return { status: 'applied', shares: applied.sharesApplied, date: applied.applicationDate };
-        const allotted = portfolio.allottedIPOs.find(app => app.ipoId._id === ipoId);
-        if (allotted) return { status: 'allotted', shares: allotted.sharesApplied, date: allotted.applicationDate };
-        const notAllotted = portfolio.notAllottedIPOs.find(app => app.ipoId._id === ipoId);
-        if (notAllotted) return { status: 'not_allotted', shares: notAllotted.sharesApplied, date: notAllotted.applicationDate };
+        // Check appliedIPOs which contains the master status
+        const applied = portfolio.appliedIPOs.find(app => (app.ipoId as any)._id === ipoId || app.ipoId === ipoId);
+        if (applied) {
+            return { 
+                status: applied.status, 
+                shares: applied.sharesApplied, 
+                sharesAllotted: (applied as any).sharesAllotted,
+                date: applied.applicationDate 
+            };
+        }
         return null;
     };
 
@@ -177,11 +183,11 @@ export default function UserDashboard() {
     ];
 
     const categoryColorMap: Record<string, { bg: string; text: string }> = {
-        market:    { bg: 'rgba(6,182,212,0.1)',   text: '#06b6d4' },
-        ipo:       { bg: 'rgba(167,139,250,0.1)', text: '#a78bfa' },
-        corporate: { bg: 'rgba(16,185,129,0.1)',  text: '#10b981' },
-        economy:   { bg: 'rgba(245,158,11,0.1)',  text: '#f59e0b' },
-        analysis:  { bg: 'rgba(20,184,166,0.1)',  text: '#14b8a6' },
+        market: { bg: 'rgba(6,182,212,0.1)', text: '#06b6d4' },
+        ipo: { bg: 'rgba(167,139,250,0.1)', text: '#a78bfa' },
+        corporate: { bg: 'rgba(16,185,129,0.1)', text: '#10b981' },
+        economy: { bg: 'rgba(245,158,11,0.1)', text: '#f59e0b' },
+        analysis: { bg: 'rgba(20,184,166,0.1)', text: '#14b8a6' },
     };
 
     if (authLoading || !user) {
@@ -207,7 +213,6 @@ export default function UserDashboard() {
     return (
         <div className="min-h-screen bg-[#080c14] text-slate-100">
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
                 * { font-family: 'DM Sans', sans-serif; }
                 .mono { font-family: 'Space Mono', monospace; }
                 .glass-header { background: rgba(8,12,20,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
@@ -529,12 +534,16 @@ export default function UserDashboard() {
                                                                     {appStatus ? (
                                                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg mono text-[10px] font-bold uppercase tracking-wider
                                                                             ${appStatus.status === 'allotted' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                                                            appStatus.status === 'applied' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' :
-                                                                            'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                                                                            {appStatus.status === 'allotted' && <CheckCircle className="w-3 h-3" />}
-                                                                            {appStatus.status === 'applied' && <Clock className="w-3 h-3" />}
-                                                                            {appStatus.status === 'not_allotted' && <XCircle className="w-3 h-3" />}
-                                                                            {appStatus.status === 'allotted' ? 'Allotted' : appStatus.status === 'applied' ? 'Applied' : 'Not Allotted'}
+                                                                                appStatus.status === 'not_allotted' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                                                                                    appStatus.status === 'verified' ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20' :
+                                                                                        'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'}`}>
+                                                                            {(appStatus.status as string) === 'allotted' && <CheckCircle className="w-3 h-3" />}
+                                                                            {(appStatus.status as string) === 'not_allotted' && <XCircle className="w-3 h-3" />}
+                                                                            {(appStatus.status as string) === 'verified' && <Check className="w-3 h-3" />}
+                                                                            {((appStatus.status as string) === 'pending' || !['allotted', 'not_allotted', 'verified'].includes(appStatus.status as string)) && <Clock className="w-3 h-3" />}
+                                                                            {(appStatus.status as string) === 'allotted' ? 'Allotted' : 
+                                                                             (appStatus.status as string) === 'not_allotted' ? 'Not Allotted' :
+                                                                             (appStatus.status as string) === 'verified' ? 'Verified' : 'Applied'}
                                                                         </span>
                                                                     ) : ipo.status === 'open' ? (
                                                                         <button
@@ -580,9 +589,18 @@ export default function UserDashboard() {
                                     {/* Portfolio Stats */}
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         {[
-                                            { label: 'Total Holdings', value: portfolio?.ownedStocks.length || 0, accent: '#06b6d4', accentBg: 'rgba(6,182,212,0.1)', accentBorder: 'rgba(6,182,212,0.2)', icon: Wallet, sub: 'Stocks owned' },
-                                            { label: 'Applied IPOs', value: portfolio?.appliedIPOs.length || 0, accent: '#a78bfa', accentBg: 'rgba(167,139,250,0.1)', accentBorder: 'rgba(167,139,250,0.2)', icon: Briefcase, sub: 'Pending allotment' },
-                                            { label: 'Allotted IPOs', value: portfolio?.allottedIPOs.length || 0, accent: '#10b981', accentBg: 'rgba(16,185,129,0.1)', accentBorder: 'rgba(16,185,129,0.2)', icon: CheckCircle, sub: 'Successfully allotted' },
+                                            { 
+                                                label: 'Total Holdings', 
+                                                value: (portfolio?.ownedStocks.length || 0) + 
+                                                       Math.max(portfolio?.allottedIPOs.length || 0, portfolio?.appliedIPOs.filter(app => app.status === 'allotted').length || 0), 
+                                                accent: '#06b6d4', accentBg: 'rgba(6,182,212,0.1)', accentBorder: 'rgba(6,182,212,0.2)', icon: Wallet, sub: 'Stocks owned' 
+                                            },
+                                            { label: 'Applied IPOs', value: portfolio?.appliedIPOs.filter(app => app.status === 'pending' || app.status === 'verified').length || 0, accent: '#a78bfa', accentBg: 'rgba(167,139,250,0.1)', accentBorder: 'rgba(167,139,250,0.2)', icon: Briefcase, sub: 'Pending allotment' },
+                                            { 
+                                                label: 'Allotted IPOs', 
+                                                value: Math.max(portfolio?.allottedIPOs.length || 0, portfolio?.appliedIPOs.filter(app => app.status === 'allotted').length || 0), 
+                                                accent: '#10b981', accentBg: 'rgba(16,185,129,0.1)', accentBorder: 'rgba(16,185,129,0.2)', icon: CheckCircle, sub: 'Successfully allotted' 
+                                            },
                                         ].map(card => {
                                             const Icon = card.icon;
                                             return (
@@ -608,30 +626,33 @@ export default function UserDashboard() {
                                             </div>
                                             <span className="text-sm font-semibold text-white">Your Holdings</span>
                                         </div>
-                                        {portfolio?.ownedStocks && portfolio.ownedStocks.length > 0 ? (
+                                        {(portfolio?.ownedStocks?.length || 0) + 
+                                         Math.max(portfolio?.allottedIPOs?.length || 0, portfolio?.appliedIPOs?.filter(app => app.status === 'allotted').length || 0) > 0 ? (
                                             <div className="overflow-x-auto">
                                                 <table className="w-full">
                                                     <thead>
                                                         <tr className="border-b border-white/[0.06]">
-                                                            {['Stock', 'Qty', 'Avg Price', 'Current', 'Value', 'P/L'].map(h => (
-                                                                <th key={h} className={`px-5 py-3 text-[10px] mono font-bold text-slate-600 uppercase tracking-wider ${h === 'Stock' ? 'text-left' : 'text-right'}`}>{h}</th>
+                                                            {['Asset', 'Qty', 'Avg Price', 'Current', 'Value', 'P/L'].map(h => (
+                                                                <th key={h} className={`px-5 py-3 text-[10px] mono font-bold text-slate-600 uppercase tracking-wider ${h === 'Asset' ? 'text-left' : 'text-right'}`}>{h}</th>
                                                             ))}
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-white/[0.04]">
-                                                        {portfolio.ownedStocks.map((holding) => {
-                                                            const pl = (holding.stockId.price - holding.averagePrice) * holding.quantity;
-                                                            const plPercent = ((holding.stockId.price - holding.averagePrice) / holding.averagePrice) * 100;
+                                                        {/* Render secondary market stocks */}
+                                                        {portfolio?.ownedStocks.map((holding) => {
+                                                            const stockPrice = holding.stockId.price || 0;
+                                                            const pl = (stockPrice - holding.averagePrice) * holding.quantity;
+                                                            const plPercent = holding.averagePrice > 0 ? ((stockPrice - holding.averagePrice) / holding.averagePrice) * 100 : 0;
                                                             return (
                                                                 <tr key={holding.stockId._id} className="table-row transition-colors">
                                                                     <td className="px-5 py-3.5">
-                                                                        <div className="mono text-sm font-bold text-white">{holding.stockId.symbol}</div>
+                                                                        <div className="mono text-sm font-bold text-white leading-tight">{holding.stockId.symbol}</div>
                                                                         <div className="text-xs text-slate-600">{holding.stockId.name}</div>
                                                                     </td>
                                                                     <td className="px-5 py-3.5 text-right mono text-sm text-slate-300">{holding.quantity}</td>
-                                                                    <td className="px-5 py-3.5 text-right mono text-sm text-slate-400">₹{holding.averagePrice.toFixed(2)}</td>
-                                                                    <td className="px-5 py-3.5 text-right mono text-sm text-slate-300">₹{holding.stockId.price?.toFixed(2)}</td>
-                                                                    <td className="px-5 py-3.5 text-right mono text-sm font-bold text-white">₹{(holding.stockId.price * holding.quantity).toFixed(2)}</td>
+                                                                    <td className="px-5 py-3.5 text-right mono text-sm text-slate-400">₹{holding.averagePrice?.toFixed(2)}</td>
+                                                                    <td className="px-5 py-3.5 text-right mono text-sm text-slate-300">₹{stockPrice.toFixed(2)}</td>
+                                                                    <td className="px-5 py-3.5 text-right mono text-sm font-bold text-white">₹{(stockPrice * holding.quantity).toFixed(2)}</td>
                                                                     <td className={`px-5 py-3.5 text-right mono text-sm font-bold ${pl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                                                                         {pl >= 0 ? '+' : ''}₹{pl.toFixed(2)}<br />
                                                                         <span className="text-xs opacity-70">({plPercent.toFixed(2)}%)</span>
@@ -639,6 +660,59 @@ export default function UserDashboard() {
                                                                 </tr>
                                                             );
                                                         })}
+                                                        {/* Combined Allotted IPOs rendering with fallback to appliedIPOs */}
+                                                        {(() => {
+                                                            // Collect unique allotted IPOs from both arrays
+                                                            const allottedMap = new Map();
+                                                            
+                                                            portfolio?.allottedIPOs.forEach(a => {
+                                                                if (a.ipoId) allottedMap.set(a.ipoId._id || a.ipoId, {
+                                                                    ...a,
+                                                                    shares: a.sharesAllotted,
+                                                                    price: a.costPrice || (a.ipoId as any).issuePrice || 0
+                                                                });
+                                                            });
+                                                            
+                                                            portfolio?.appliedIPOs.filter(app => app.status === 'allotted').forEach(app => {
+                                                                const id = (app.ipoId as any)._id || app.ipoId;
+                                                                if (!allottedMap.has(id) && app.ipoId) {
+                                                                    allottedMap.set(id, {
+                                                                        ipoId: app.ipoId,
+                                                                        shares: (app as any).sharesAllotted || app.sharesApplied,
+                                                                        price: (app.ipoId as any).issuePrice || 0,
+                                                                        allotmentDate: (app as any).allotmentDate || app.applicationDate
+                                                                    });
+                                                                }
+                                                            });
+
+                                                            return Array.from(allottedMap.values()).map((allotment) => {
+                                                                const ipo = allotment.ipoId as any;
+                                                                const currentPrice = ipo.listingPrice || ipo.issuePrice || allotment.price || 0;
+                                                                const avgPrice = allotment.price || 0;
+                                                                const pl = (currentPrice - avgPrice) * allotment.shares;
+                                                                const plPercent = avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice) * 100 : 0;
+                                                                
+                                                                return (
+                                                                    <tr key={ipo._id} className="table-row border-l-2 border-emerald-500/30 transition-colors">
+                                                                        <td className="px-5 py-3.5">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className="mono text-sm font-bold text-white leading-tight">{ipo.symbol}</span>
+                                                                                <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-[9px] text-emerald-400 font-bold uppercase tracking-tighter">IPO</span>
+                                                                            </div>
+                                                                            <div className="text-xs text-slate-600">{ipo.name}</div>
+                                                                        </td>
+                                                                        <td className="px-5 py-3.5 text-right mono text-sm text-slate-300">{allotment.shares}</td>
+                                                                        <td className="px-5 py-3.5 text-right mono text-sm text-slate-400">₹{avgPrice.toFixed(2)}</td>
+                                                                        <td className="px-5 py-3.5 text-right mono text-sm text-slate-300">₹{currentPrice.toFixed(2)}</td>
+                                                                        <td className="px-5 py-3.5 text-right mono text-sm font-bold text-white">₹{(currentPrice * allotment.shares).toFixed(2)}</td>
+                                                                        <td className={`px-5 py-3.5 text-right mono text-sm font-bold ${pl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                                            {pl >= 0 ? '+' : ''}₹{pl.toFixed(2)}<br />
+                                                                            <span className="text-xs opacity-70">({plPercent.toFixed(2)}%)</span>
+                                                                        </td>
+                                                                    </tr>
+                                                                );
+                                                            });
+                                                        })()}
                                                     </tbody>
                                                 </table>
                                             </div>

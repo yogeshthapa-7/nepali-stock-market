@@ -27,11 +27,7 @@ export default function UserLayout({
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#080c14] flex items-center justify-center">
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
-          * { font-family: 'DM Sans', sans-serif; }
-        `}</style>
+      <div className="min-h-screen bg-[#080c14] flex items-center justify-center" style={{ fontFamily: "'DM Sans', sans-serif" }}>
         <div className="flex flex-col items-center gap-5">
           <div className="relative w-14 h-14">
             <div className="absolute inset-0 bg-emerald-400/15 rounded-2xl blur-sm animate-pulse" />
@@ -51,17 +47,10 @@ export default function UserLayout({
 
   return (
     <div className="min-h-screen bg-[#080c14]">
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-        .mono { font-family: 'Space Mono', monospace; }
-        .grid-bg {
-          background-image: linear-gradient(rgba(6,182,212,0.035) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(6,182,212,0.035) 1px, transparent 1px);
-          background-size: 40px 40px;
-        }
-      `}</style>
-      <div className="grid-bg min-h-screen">
+      <div className="grid-bg min-h-screen" style={{
+        backgroundImage: 'linear-gradient(rgba(6,182,212,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(6,182,212,0.035) 1px, transparent 1px)',
+        backgroundSize: '40px 40px'
+      }}>
         {children}
       </div>
     </div>

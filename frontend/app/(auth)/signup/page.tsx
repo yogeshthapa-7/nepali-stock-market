@@ -85,7 +85,6 @@ export default function SignupPage() {
     return (
         <div className="min-h-screen flex bg-[#080c14]">
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
                 * { font-family: 'DM Sans', sans-serif; }
                 .mono { font-family: 'Space Mono', monospace; }
                 .grid-bg {

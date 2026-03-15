@@ -13,6 +13,11 @@ import portfolioRoutes from './routes/portfolio.js';
 import watchlistRoutes from './routes/watchlist.js';
 import transactionRoutes from './routes/transactions.js';
 import marketDataRoutes from './routes/market-data.js';
+import indicesRoutes from './routes/indices.js';
+import scraperRoutes from './routes/scraper.js';
+import alertsRoutes from './routes/alerts.js';
+import cron from 'node-cron';
+import nepsseScraper from './scraper/nepseScraper.js';
 import errorHandler from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -48,6 +53,9 @@ app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/watchlist', watchlistRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/market-data', marketDataRoutes);
+app.use('/api/indices', indicesRoutes);
+app.use('/api/scraper', scraperRoutes);
+app.use('/api/alerts', alertsRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -83,8 +91,25 @@ io.on('connection', (socket) => {
     });
 });
 
-// Export for testing
-export { app, httpServer, io };
+// Export io for scraper
+export { io };
+
+// Schedule NEPSE scraper - run every 30 seconds during market hours
+// Cron format: second minute hour day month dayOfWeek
+// Run every 30 seconds: */30 * * * * *
+cron.schedule('*/30 * * * * *', async () => {
+    console.log('[Cron] Running NEPSE scraper...');
+    try {
+        await nepsseScraper.scrape();
+    } catch (error) {
+        console.error('[Cron] Scraper error:', error);
+    }
+});
+
+// Also run initial scrape on startup
+setTimeout(() => {
+    nepsseScraper.scrape().catch(console.error);
+}, 5000); // Wait 5 seconds after server starts
 
 // Start server
 const PORT = process.env.PORT || 5000;

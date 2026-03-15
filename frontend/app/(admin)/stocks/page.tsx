@@ -27,8 +27,6 @@ export default function AdminStocksPage() {
     const [editingStock, setEditingStock] = useState<Stock | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-    const [topGainers, setTopGainers] = useState<Stock[]>([]);
-    const [topLosers, setTopLosers] = useState<Stock[]>([]);
 
     const [formData, setFormData] = useState({
         symbol: '',
@@ -50,14 +48,8 @@ export default function AdminStocksPage() {
 
     const fetchStocks = async () => {
         try {
-            const [allData, gainersData, losersData] = await Promise.all([
-                stocksAPI.getAll({ search: searchTerm || undefined, sort: sortBy }),
-                stocksAPI.getAll({ sort: 'change_desc' }),
-                stocksAPI.getAll({ sort: 'change_asc' })
-            ]);
+            const allData = await stocksAPI.getAll({ search: searchTerm || undefined, sort: sortBy });
             setStocks(allData.stocks);
-            setTopGainers(gainersData.stocks.slice(0, 5));
-            setTopLosers(losersData.stocks.slice(0, 5));
         } catch (error) {
             console.error('Failed to fetch stocks:', error);
         } finally {
@@ -134,7 +126,6 @@ export default function AdminStocksPage() {
     return (
         <div className="space-y-5">
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
                 * { font-family: 'DM Sans', sans-serif; }
                 .mono { font-family: 'Space Mono', monospace; }
                 .table-row:hover { background: rgba(255,255,255,0.025); }
@@ -280,80 +271,6 @@ export default function AdminStocksPage() {
             </div>
             <p className="text-xs text-slate-600 px-1">Showing <span className="text-slate-400 font-semibold">{stocks.length}</span> stocks</p>
 
-            {/* Top Gainers & Losers Grid */}
-            {!isLoading && stocks.length > 0 && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-                    {/* Top Gainers */}
-                    <div className="bg-[#0d1420] border border-white/[0.07] rounded-2xl overflow-hidden">
-                        <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 text-emerald-400" />
-                                <h3 className="text-sm font-bold text-white">Top Gainers</h3>
-                            </div>
-                            <span className="text-[10px] mono text-slate-500 uppercase tracking-widest">Top 5</span>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <tbody className="divide-y divide-white/[0.04]">
-                                    {topGainers.map((stock) => (
-                                        <tr key={stock._id} className="table-row">
-                                            <td className="px-5 py-3 whitespace-nowrap">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="mono text-xs font-bold text-white">{stock.symbol}</span>
-                                                    <span className="text-[10px] text-slate-500 truncate max-w-[100px]">{stock.name}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-5 py-3 text-right mono text-xs font-bold text-white">
-                                                ₹{stock.price.toFixed(2)}
-                                            </td>
-                                            <td className="px-5 py-3 text-right">
-                                                <span className="mono text-[11px] font-bold text-emerald-400">
-                                                    +{stock.changePercent.toFixed(2)}%
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    {/* Top Losers */}
-                    <div className="bg-[#0d1420] border border-white/[0.07] rounded-2xl overflow-hidden">
-                        <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <TrendingDown className="w-4 h-4 text-red-400" />
-                                <h3 className="text-sm font-bold text-white">Top Losers</h3>
-                            </div>
-                            <span className="text-[10px] mono text-slate-500 uppercase tracking-widest">Top 5</span>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <tbody className="divide-y divide-white/[0.04]">
-                                    {topLosers.map((stock) => (
-                                        <tr key={stock._id} className="table-row">
-                                            <td className="px-5 py-3 whitespace-nowrap">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="mono text-xs font-bold text-white">{stock.symbol}</span>
-                                                    <span className="text-[10px] text-slate-500 truncate max-w-[100px]">{stock.name}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-5 py-3 text-right mono text-xs font-bold text-white">
-                                                ₹{stock.price.toFixed(2)}
-                                            </td>
-                                            <td className="px-5 py-3 text-right">
-                                                <span className="mono text-[11px] font-bold text-red-400">
-                                                    {stock.changePercent.toFixed(2)}%
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Modal */}
             {isModalOpen && (

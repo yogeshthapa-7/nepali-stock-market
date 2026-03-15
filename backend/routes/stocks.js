@@ -1,5 +1,6 @@
 import express from 'express';
 import Stock from '../models/Stock.js';
+import MarketData from '../models/MarketData.js';
 import { verifyToken, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -61,6 +62,57 @@ router.get('/:symbol', async (req, res, next) => {
     next(error);
   }
 });
+
+// Get stock with full details (charts, order book, financials)
+router.get('/:symbol/details', async (req, res, next) => {
+  try {
+    const stock = await Stock.findOne({ symbol: req.params.symbol.toUpperCase() });
+    if (!stock) {
+      return res.status(404).json({ message: 'Stock not found' });
+    }
+
+    // Get historical data for charts
+    const historicalData = await MarketData.find({ symbol: req.params.symbol.toUpperCase() })
+      .sort({ timestamp: -1 })
+      .limit(100);
+
+    // Generate simulated order book if not present
+    const orderBook = stock.orderBook || {
+      buy: generateOrderBook(stock.price, 'buy'),
+      sell: generateOrderBook(stock.price, 'sell'),
+    };
+
+    res.json({
+      message: 'Stock details retrieved successfully',
+      stock,
+      historicalData: historicalData.reverse(),
+      orderBook,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Helper function to generate simulated order book
+function generateOrderBook(basePrice, side) {
+  const orders = [];
+  const step = basePrice * 0.001; // 0.1% step
+
+  for (let i = 0; i < 5; i++) {
+    const price = side === 'buy'
+      ? basePrice - (i * step)
+      : basePrice + (i * step);
+
+    orders.push({
+      price: parseFloat(price.toFixed(2)),
+      quantity: Math.floor(Math.random() * 10000) + 1000,
+    });
+  }
+  return orders;
+}
+
+// Import MarketData for historical data
+// MarketData is already imported at the top
 
 // Create stock (admin only)
 router.post('/', verifyToken, requireAdmin, async (req, res, next) => {

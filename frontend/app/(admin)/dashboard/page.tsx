@@ -142,8 +142,8 @@ export default function AdminDashboardPage() {
                         </div>
                     </div>
                     <div className="flex gap-1.5">
-                        {[0,1,2].map(i => (
-                            <div key={i} className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{animationDelay:`${i*0.15}s`}} />
+                        {[0, 1, 2].map(i => (
+                            <div key={i} className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
                         ))}
                     </div>
                 </div>
@@ -154,7 +154,6 @@ export default function AdminDashboardPage() {
     return (
         <div className="space-y-6">
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
                 * { font-family: 'DM Sans', sans-serif; }
                 .mono { font-family: 'Space Mono', monospace; }
                 .stat-card:hover .stat-arrow { transform: translate(2px, -2px); }
@@ -199,15 +198,15 @@ export default function AdminDashboardPage() {
                             key={card.title}
                             href={card.href}
                             className="stat-card group relative bg-[#0d1420] border border-white/[0.07] rounded-2xl p-5 hover:border-white/[0.12] transition-all duration-300 overflow-hidden shimmer-border"
-                            style={{animationDelay:`${index*80}ms`}}
+                            style={{ animationDelay: `${index * 80}ms` }}
                         >
                             {/* Ambient glow */}
-                            <div className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl" style={{background: card.accent, transform: 'translate(50%, -50%)'}} />
-                            
+                            <div className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl" style={{ background: card.accent, transform: 'translate(50%, -50%)' }} />
+
                             <div className="relative">
                                 <div className="flex items-start justify-between mb-5">
-                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{background: card.accentBg, border: `1px solid ${card.accentBorder}`}}>
-                                        <Icon className="w-5 h-5" style={{color: card.accent}} />
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: card.accentBg, border: `1px solid ${card.accentBorder}` }}>
+                                        <Icon className="w-5 h-5" style={{ color: card.accent }} />
                                     </div>
                                     <ArrowUpRight className="stat-arrow w-4 h-4 text-slate-700 group-hover:text-slate-500" />
                                 </div>
@@ -297,7 +296,7 @@ export default function AdminDashboardPage() {
                             </div>
                         ) : (
                             recentIPOs.map((ipo) => {
-                                const statusConfig: Record<string, {bg: string, text: string, border: string}> = {
+                                const statusConfig: Record<string, { bg: string, text: string, border: string }> = {
                                     open: { bg: 'rgba(16,185,129,0.1)', text: '#10b981', border: 'rgba(16,185,129,0.25)' },
                                     upcoming: { bg: 'rgba(6,182,212,0.1)', text: '#06b6d4', border: 'rgba(6,182,212,0.25)' },
                                     closed: { bg: 'rgba(100,116,139,0.1)', text: '#94a3b8', border: 'rgba(100,116,139,0.25)' },
@@ -316,7 +315,7 @@ export default function AdminDashboardPage() {
                                             </div>
                                         </div>
                                         <div className="text-right flex flex-col items-end gap-1">
-                                            <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] mono font-bold uppercase tracking-wider" style={{background: sc.bg, color: sc.text, border: `1px solid ${sc.border}`}}>
+                                            <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] mono font-bold uppercase tracking-wider" style={{ background: sc.bg, color: sc.text, border: `1px solid ${sc.border}` }}>
                                                 {ipo.status}
                                             </span>
                                             <div className="mono text-xs text-slate-500 font-medium">₹{ipo.issuePrice}</div>
@@ -348,9 +347,9 @@ export default function AdminDashboardPage() {
                                     href={action.href}
                                     className="group relative flex flex-col items-center justify-center p-5 rounded-xl border border-white/[0.06] hover:border-white/[0.12] bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-200 overflow-hidden"
                                 >
-                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{background: `radial-gradient(circle at 50% 0%, ${action.accentBg}, transparent 70%)`}} />
-                                    <div className="relative w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110 duration-200" style={{background: action.accentBg, border: `1px solid ${action.accentBorder}`}}>
-                                        <Icon className="w-5 h-5" style={{color: action.accent}} />
+                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: `radial-gradient(circle at 50% 0%, ${action.accentBg}, transparent 70%)` }} />
+                                    <div className="relative w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110 duration-200" style={{ background: action.accentBg, border: `1px solid ${action.accentBorder}` }}>
+                                        <Icon className="w-5 h-5" style={{ color: action.accent }} />
                                     </div>
                                     <span className="relative text-xs font-semibold text-slate-400 group-hover:text-slate-200 transition-colors text-center">{action.label}</span>
                                 </Link>

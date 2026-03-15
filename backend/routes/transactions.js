@@ -8,7 +8,7 @@ const router = express.Router();
 // Get user transactions
 router.get('/', verifyToken, async (req, res, next) => {
   try {
-    const { type, limit = 50, offset = 0 } = req.query;
+    const { type, limit = 50, offset = 0, format = 'json' } = req.query;
     let query = { userId: req.userId };
 
     if (type) {
@@ -21,6 +21,19 @@ router.get('/', verifyToken, async (req, res, next) => {
       .sort({ transactionDate: -1 })
       .limit(parseInt(limit))
       .skip(parseInt(offset));
+
+    // If CSV format requested
+    if (format === 'csv') {
+      const csvHeader = 'Date,Type,Symbol,Quantity,Price,Total Amount,Status,Description\n';
+      const csvRows = transactions.map(t => {
+        const symbol = t.stockId?.symbol || t.ipoId?.symbol || 'N/A';
+        return `${new Date(t.transactionDate).toISOString()},${t.type},${symbol},${t.quantity},${t.price},${t.totalAmount},${t.status},"${t.description || ''}"`;
+      }).join('\n');
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=transactions.csv');
+      return res.send(csvHeader + csvRows);
+    }
 
     res.json({
       message: 'Transactions retrieved successfully',
@@ -151,7 +164,7 @@ router.get('/portfolio/summary', verifyToken, async (req, res, next) => {
         ...portfolio.toJSON(),
         currentValue,
         profitLoss: currentValue - portfolio.totalInvestment,
-        profitLossPercent: portfolio.totalInvestment > 0 
+        profitLossPercent: portfolio.totalInvestment > 0
           ? ((currentValue - portfolio.totalInvestment) / portfolio.totalInvestment * 100).toFixed(2)
           : 0,
       },

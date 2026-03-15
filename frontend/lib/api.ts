@@ -76,7 +76,30 @@ export interface User {
     role: 'user' | 'admin';
     isVerified: boolean;
     profileImage?: string;
+    crnNumber?: string;
+    boidNumber?: string;
+    dematAccountType?: string;
+    shareBalance?: Record<string, number>;
+    brokerName?: string;
+    brokerNumber?: string;
+    phone?: string;
     createdAt: string;
+}
+
+export interface MarketIndex {
+    _id: string;
+    name: string;
+    displayName: string;
+    value: number;
+    previousValue: number;
+    change: number;
+    changePercent: number;
+    high: number;
+    low: number;
+    volume: number;
+    marketCap: string;
+    isActive: boolean;
+    description: string;
 }
 
 export interface Stock {
@@ -118,8 +141,9 @@ export interface IPO {
     applications: Array<{
         userId: User;
         sharesApplied: number;
-        status: 'pending' | 'allotted' | 'not_allotted';
-        appliedDate: string;
+        status: 'pending' | 'verified' | 'allotted' | 'not_allotted';
+        sharesAllotted?: number;
+        applicationDate: string;
     }>;
     createdAt: string;
     updatedAt: string;
@@ -153,19 +177,20 @@ export interface Portfolio {
         ipoId: IPO;
         sharesApplied: number;
         applicationDate: string;
-        status: 'pending' | 'allotted' | 'not_allotted';
+        status: 'pending' | 'verified' | 'allotted' | 'not_allotted';
     }>;
     allottedIPOs: Array<{
         ipoId: IPO;
-        sharesApplied: number;
-        applicationDate: string;
-        status: 'allotted';
+        sharesAllotted: number;
+        allotmentDate: string;
+        costPrice: number;
+        status?: 'allotted';
     }>;
     notAllottedIPOs: Array<{
         ipoId: IPO;
         sharesApplied: number;
         applicationDate: string;
-        status: 'not_allotted';
+        status?: 'not_allotted';
     }>;
     createdAt: string;
     updatedAt: string;
@@ -310,6 +335,33 @@ export const iposAPI = {
         const response = await api.post(`/ipos/${symbol}/apply`, { sharesApplied });
         return response.data;
     },
+
+    updateApplicationStatus: async (
+        symbol: string,
+        userId: string,
+        status: 'pending' | 'verified' | 'allotted' | 'not_allotted',
+        sharesAllotted?: number
+    ): Promise<{ application: any; message: string }> => {
+        const response = await api.put(`/ipos/${symbol}/applications/${userId}/status`, {
+            status,
+            sharesAllotted,
+        });
+        return response.data;
+    },
+
+    bulkUpdateApplicationStatus: async (
+        symbol: string,
+        applicationIds: string[],
+        status: 'pending' | 'verified' | 'allotted' | 'not_allotted',
+        sharesAllotted?: number
+    ): Promise<{ count: number; message: string }> => {
+        const response = await api.put(`/ipos/${symbol}/applications/bulk-status`, {
+            applicationIds,
+            status,
+            sharesAllotted,
+        });
+        return response.data;
+    },
 };
 
 // News API
@@ -392,6 +444,98 @@ export const watchlistAPI = {
 
     removeIPO: async (ipoId: string): Promise<{ watchlist: Watchlist; message: string }> => {
         const response = await api.delete(`/watchlist/ipos/${ipoId}`);
+        return response.data;
+    },
+};
+
+// Indices API (Market Indices, Top Gainers/Losers)
+export const indicesAPI = {
+    getAll: async (): Promise<{ indices: MarketIndex[]; count: number }> => {
+        const response = await api.get('/indices');
+        return response.data;
+    },
+
+    getByName: async (name: string): Promise<{ index: MarketIndex }> => {
+        const response = await api.get(`/indices/${name}`);
+        return response.data;
+    },
+
+    getGainers: async (limit?: number): Promise<{ stocks: Stock[]; count: number }> => {
+        const response = await api.get(`/indices/stocks/gainers?limit=${limit || 10}`);
+        return response.data;
+    },
+
+    getLosers: async (limit?: number): Promise<{ stocks: Stock[]; count: number }> => {
+        const response = await api.get(`/indices/stocks/losers?limit=${limit || 10}`);
+        return response.data;
+    },
+
+    getTopMovers: async (limit?: number): Promise<{
+        gainers: Stock[];
+        losers: Stock[];
+        topVolume: Stock[];
+        topTurnover: Stock[];
+    }> => {
+        const response = await api.get(`/indices/stocks/top-movers?limit=${limit || 10}`);
+        return response.data;
+    },
+
+    getSummary: async (): Promise<{
+        indices: MarketIndex[];
+        marketStats: {
+            totalStocks: number;
+            totalVolume: number;
+            avgChange: number;
+            advancing: number;
+            declining: number;
+            unchanged: number;
+        };
+    }> => {
+        const response = await api.get('/indices/summary');
+        return response.data;
+    },
+};
+
+// Price Alerts API
+export interface Alert {
+    _id: string;
+    userId: string;
+    stockSymbol: string;
+    targetPrice: number;
+    condition: 'above' | 'below' | 'equals';
+    isActive: boolean;
+    isTriggered: boolean;
+    triggeredAt?: Date;
+    note?: string;
+    createdAt: string;
+}
+
+export const alertsAPI = {
+    getAll: async (): Promise<{ alerts: Alert[] }> => {
+        const response = await api.get('/alerts');
+        return response.data;
+    },
+
+    create: async (data: {
+        stockSymbol: string;
+        targetPrice: number;
+        condition: 'above' | 'below' | 'equals';
+        note?: string;
+    }): Promise<{ alert: Alert }> => {
+        const response = await api.post('/alerts', data);
+        return response.data;
+    },
+
+    update: async (id: string, data: {
+        isActive?: boolean;
+        note?: string;
+    }): Promise<{ alert: Alert }> => {
+        const response = await api.put(`/alerts/${id}`, data);
+        return response.data;
+    },
+
+    delete: async (id: string): Promise<{ message: string }> => {
+        const response = await api.delete(`/alerts/${id}`);
         return response.data;
     },
 };
